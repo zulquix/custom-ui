@@ -3224,7 +3224,6 @@ function Library:SetWatermark(Text)
 
     Library.WatermarkText.Text = Text;
 end;
-@@
 function Library:Notify(Text, Time)
     return Library:NotifyEx({
         Text = Text,
