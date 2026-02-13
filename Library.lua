@@ -1221,16 +1221,9 @@ do
         end
 
         local function isModifier(key)
-            return key == 'LeftControl' or key == 'RightControl'
-                or key == 'LeftShift' or key == 'RightShift'
-                or key == 'LeftAlt' or key == 'RightAlt'
-        end
-
-        local function modifierNameFromKey(key)
-            if key == 'LeftControl' or key == 'RightControl' then return 'Ctrl' end
-            if key == 'LeftShift' or key == 'RightShift' then return 'Shift' end
-            if key == 'LeftAlt' or key == 'RightAlt' then return 'Alt' end
-            return nil
+            return key == 'LeftControl' or key == 'RightControl' or key == 'Ctrl'
+                or key == 'LeftShift' or key == 'RightShift' or key == 'Shift'
+                or key == 'LeftAlt' or key == 'RightAlt' or key == 'Alt'
         end
 
         local function parseCombo(val)
