@@ -454,3 +454,5 @@ ThemeManager:ApplyToTab(Tabs['UI Settings'])
 -- You can use the SaveManager:LoadAutoloadConfig() to load a config
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
+print("NEW VERSION LOADED")
+
