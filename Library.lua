@@ -44,222 +44,7 @@ local Library = {
 
     Signals = {};
     ScreenGui = ScreenGui;
-    
-    -- Visual Effects Settings
-    ParticleEffects = true;
-    GlowEffects = true;
-    SmoothAnimations = true;
-    NotificationQueue = {};
 };
-
--- Key System
-local keySystem = {
-    loaded = false,
-    keys = {}
-};
-
-function Library:LoadKeySystem()
-    if keySystem.loaded then return end
-    
-    -- Check if key system variables exist in global scope
-    if getgenv().loadkeysystem and getgenv().key then
-        keySystem.loaded = true
-        keySystem.keys = getgenv().key
-        
-        -- Parse keys and validate
-        local keyList = {}
-        for key in string.gmatch(getgenv().key, '([^,]+)') do
-            table.insert(keyList, key)
-        end
-        
-        if #keyList > 0 then
-            -- Create simple notification
-            local NotifyFrame = Library:Create('Frame', {
-                Parent = Library.ScreenGui,
-                Size = UDim2.new(0, 200, 0, 50),
-                Position = UDim2.new(0.5, -100, 0, 50),
-                BackgroundColor3 = Library.AccentColor,
-                BorderSizePixel = 0,
-                ZIndex = 1000
-            })
-            
-            local NotifyLabel = Library:CreateLabel({
-                Parent = NotifyFrame,
-                Size = UDim2.new(1, -10, 1, 0),
-                Position = UDim2.new(0, 5, 0, 0),
-                Text = 'Key system loaded successfully!',
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                TextSize = 14,
-                ZIndex = 1001
-            })
-            
-            -- Slide in animation
-            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 50), 'Out', 'Quad', 0.5)
-            wait(0.5)
-            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 20), 'Out', 'Quad', 0.3)
-            
-            task.wait(2)
-            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 50), 'In', 'Quad', 0.3)
-            task.wait(0.5)
-            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 20), 'Out', 'Quad', 0.3)
-            
-            task.spawn(function()
-                task.wait(3)
-                if NotifyFrame then
-                    NotifyFrame:Destroy()
-                end
-            end)
-        end
-    end
-end
-
-function Library:ValidateKey(inputKey)
-    if not keySystem.loaded then return false end
-    
-    for _, validKey in ipairs(keySystem.keys) do
-        if inputKey:lower() == validKey:lower() then
-            return true
-        end
-    end
-    end
-    
-    return false
-end
-
--- Visual Effects Module
-local VisualEffects = {};
-
-function VisualEffects:CreateParticleEffect(Parent, Color, Duration)
-    if not Library.ParticleEffects then return end
-    
-    local Particles = {}
-    local ParticleCount = 8
-    
-    for i = 1, ParticleCount do
-        local Particle = Library:Create('Frame', {
-            Parent = Parent,
-            Size = UDim2.new(0, 2, 0, 2),
-            BackgroundColor3 = Color,
-            BorderSizePixel = 0,
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            ZIndex = 10,
-            AnchorPoint = Vector2.new(0.5, 0.5)
-        })
-        
-        local Angle = (math.pi * 2 / ParticleCount) * i
-        local Distance = 20
-        local TargetX = math.cos(Angle) * Distance
-        local TargetY = math.sin(Angle) * Distance
-        
-        local Tween = TweenService:Create(Particle, TweenInfo.new(Duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = UDim2.new(0.5, TargetX, 0.5, TargetY),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 0, 0, 0)
-        })
-        
-        Tween:Play()
-        table.insert(Particles, {Particle, Tween})
-    end
-    
-    task.spawn(function()
-        wait(Duration)
-        for _, ParticleData in ipairs(Particles) do
-            if ParticleData[1] then
-                ParticleData[1]:Destroy()
-            end
-        end
-    end)
-end
-
-function VisualEffects:CreateGlowEffect(Parent, Color, Intensity)
-    if not Library.GlowEffects then return end
-    
-    local Glow = Library:Create('ImageLabel', {
-        Parent = Parent,
-        Size = UDim2.new(1, 10, 1, 10),
-        Position = UDim2.new(0, -5, 0, -5),
-        BackgroundTransparency = 1,
-        Image = 'rbxassetid://502968493',
-        ImageColor3 = Color,
-        ImageTransparency = 0.8 - (Intensity * 0.3),
-        ZIndex = 4,
-        AnchorPoint = Vector2.new(0, 0)
-    })
-    
-    local PulseTween = TweenService:Create(Glow, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1), {
-        ImageTransparency = 0.9 - (Intensity * 0.3)
-    })
-    
-    PulseTween:Play()
-    return Glow, PulseTween
-end
-
-function VisualEffects:SmoothHover(Element, HoverColor, NormalColor)
-    if not Library.SmoothAnimations then return end
-    
-    local HoverTween = TweenService:Create(Element, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = HoverColor
-    })
-    
-    local NormalTween = TweenService:Create(Element, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundColor3 = NormalColor
-    })
-    
-    return HoverTween, NormalTween
-end
-
-function VisualEffects:CreateNotification(Text, Duration, Type)
-    local Notification = Library:Create('Frame', {
-        Parent = Library.ScreenGui,
-        Size = UDim2.new(0, 300, 0, 50),
-        Position = UDim2.new(1, 320, 0, #Library.NotificationQueue * 60),
-        BackgroundColor3 = Type == 'success' and Color3.fromRGB(0, 255, 0) or Type == 'error' and Color3.fromRGB(255, 0, 0) or Library.AccentColor,
-        BorderSizePixel = 0,
-        ZIndex = 1000
-    })
-    
-    local Label = Library:Create('Label', {
-        Parent = Notification,
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = Text,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Font = Library.Font,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        ZIndex = 1001
-    })
-    
-    -- Slide in animation
-    local SlideIn = TweenService:Create(Notification, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -310, 0, #Library.NotificationQueue * 60)
-    })
-    
-    SlideIn:Play()
-    table.insert(Library.NotificationQueue, Notification)
-    
-    task.spawn(function()
-        wait(Duration)
-        
-        -- Slide out animation
-        local SlideOut = TweenService:Create(Notification, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(1, 320, 0, Notification.Position.Y.Offset)
-        })
-        
-        SlideOut:Play()
-        SlideOut.Completed:Connect(function()
-            Notification:Destroy()
-            for i, Notif in ipairs(Library.NotificationQueue) do
-                if Notif == Notification then
-                    table.remove(Library.NotificationQueue, i)
-                    break
-                end
-            end
-        end)
-    end)
-end
 
 local RainbowStep = 0
 local Hue = 0
@@ -1974,12 +1759,6 @@ do
             end);
         end
 
-        -- Add manual trigger support for submit buttons
-        function Textbox:TriggerCallback()
-            Textbox:SetValue(Box.Text);
-            Library:AttemptSave();
-        end
-
         -- https://devforum.roblox.com/t/how-to-make-textboxes-follow-current-cursor-position/1368429/6
         -- thank you nicemike40 :)
 
@@ -2101,23 +1880,10 @@ do
             Parent = ToggleOuter;
         });
 
-        -- Visual Effects: Add glow effect container
-        local GlowEffect = VisualEffects:CreateGlowEffect(ToggleOuter, Library.AccentColor, 0.5)
-        local HoverTween, NormalTween = VisualEffects:SmoothHover(ToggleOuter, Library.AccentColor, Color3.new(0, 0, 0))
-
         Library:OnHighlight(ToggleRegion, ToggleOuter,
             { BorderColor3 = 'AccentColor' },
             { BorderColor3 = 'Black' }
         );
-
-        -- Enhanced hover effects
-        ToggleRegion.MouseEnter:Connect(function()
-            if HoverTween then HoverTween:Play() end
-        end)
-        
-        ToggleRegion.MouseLeave:Connect(function()
-            if NormalTween then NormalTween:Play() end
-        end)
 
         function Toggle:UpdateColors()
             Toggle:Display();
@@ -2145,21 +1911,6 @@ do
 
             Toggle.Value = Bool;
             Toggle:Display();
-
-            -- Visual Effects: Create particle effect when toggled
-            if Bool then
-                VisualEffects:CreateParticleEffect(ToggleOuter, Library.AccentColor, 0.5)
-                -- Update glow effect for active state
-                if GlowEffect then
-                    GlowEffect.ImageColor3 = Library.AccentColor
-                    GlowEffect.ImageTransparency = 0.5
-                end
-            else
-                -- Dim glow effect for inactive state
-                if GlowEffect then
-                    GlowEffect.ImageTransparency = 0.9
-                end
-            end
 
             for _, Addon in next, Toggle.Addons do
                 if Addon.Type == 'KeyPicker' and Addon.SyncToggleState then
@@ -3090,14 +2841,7 @@ function Library:SetWatermark(Text)
     Library.WatermarkText.Text = Text;
 end;
 
-function Library:Notify(Text, Time, Type)
-    -- Use enhanced notification system if available
-    if VisualEffects.CreateNotification then
-        VisualEffects:CreateNotification(Text, Time or 5, Type or 'info')
-        return
-    end
-    
-    -- Fallback to original notification system
+function Library:Notify(Text, Time)
     local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
 
     YSize = YSize + 7
@@ -3106,6 +2850,7 @@ function Library:Notify(Text, Time, Type)
         BorderColor3 = Color3.new(0, 0, 0);
         Position = UDim2.new(0, 100, 0, 10);
         Size = UDim2.new(0, 0, 0, YSize);
+        ClipsDescendants = true;
         ZIndex = 100;
         Parent = Library.NotificationArea;
     });
@@ -3124,8 +2869,9 @@ function Library:Notify(Text, Time, Type)
         BorderColor3 = 'OutlineColor';
     }, true);
 
-    local NotifyContent = Library:Create('Frame', {
-        BackgroundColor3 = Color3.new(0, 0, 0);
+    local InnerFrame = Library:Create('Frame', {
+        BackgroundColor3 = Color3.new(1, 1, 1);
+        BorderSizePixel = 0;
         Position = UDim2.new(0, 1, 0, 1);
         Size = UDim2.new(1, -2, 1, -2);
         ZIndex = 102;
@@ -3133,23 +2879,31 @@ function Library:Notify(Text, Time, Type)
     });
 
     local Gradient = Library:Create('UIGradient', {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.new(0.9, 0.9, 0.9))
-        };
-        Rotation = 90;
-        Parent = NotifyContent;
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+            ColorSequenceKeypoint.new(1, Library.MainColor),
+        });
+        Rotation = -90;
+        Parent = InnerFrame;
+    });
+
+    Library:AddToRegistry(Gradient, {
+        Color = function()
+            return ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+                ColorSequenceKeypoint.new(1, Library.MainColor),
+            });
+        end
     });
 
     local NotifyLabel = Library:CreateLabel({
         Position = UDim2.new(0, 4, 0, 0);
         Size = UDim2.new(1, -4, 1, 0);
         Text = Text;
+        TextXAlignment = Enum.TextXAlignment.Left;
         TextSize = 14;
-        TextColor3 = Library.FontColor;
-        Font = Library.Font;
         ZIndex = 103;
-        Parent = NotifyContent;
+        Parent = InnerFrame;
     });
 
     local LeftColor = Library:Create('Frame', {
