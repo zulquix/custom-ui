@@ -52,6 +52,80 @@ local Library = {
     NotificationQueue = {};
 };
 
+-- Key System
+local keySystem = {
+    loaded = false,
+    keys = {}
+};
+
+function Library:LoadKeySystem()
+    if keySystem.loaded then return end
+    
+    -- Check if key system variables exist in global scope
+    if getgenv().loadkeysystem and getgenv().key then
+        keySystem.loaded = true
+        keySystem.keys = getgenv().key
+        
+        -- Parse keys and validate
+        local keyList = {}
+        for key in string.gmatch(getgenv().key, '([^,]+)') do
+            table.insert(keyList, key)
+        end
+        
+        if #keyList > 0 then
+            -- Create simple notification
+            local NotifyFrame = Library:Create('Frame', {
+                Parent = Library.ScreenGui,
+                Size = UDim2.new(0, 200, 0, 50),
+                Position = UDim2.new(0.5, -100, 0, 50),
+                BackgroundColor3 = Library.AccentColor,
+                BorderSizePixel = 0,
+                ZIndex = 1000
+            })
+            
+            local NotifyLabel = Library:CreateLabel({
+                Parent = NotifyFrame,
+                Size = UDim2.new(1, -10, 1, 0),
+                Position = UDim2.new(0, 5, 0, 0),
+                Text = 'Key system loaded successfully!',
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                ZIndex = 1001
+            })
+            
+            -- Slide in animation
+            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 50), 'Out', 'Quad', 0.5)
+            wait(0.5)
+            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 20), 'Out', 'Quad', 0.3)
+            
+            task.wait(2)
+            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 50), 'In', 'Quad', 0.3)
+            task.wait(0.5)
+            NotifyFrame:TweenPosition(UDim2.new(0.5, -100, 0, 20), 'Out', 'Quad', 0.3)
+            
+            task.spawn(function()
+                task.wait(3)
+                if NotifyFrame then
+                    NotifyFrame:Destroy()
+                end
+            end)
+        end
+    end
+end
+
+function Library:ValidateKey(inputKey)
+    if not keySystem.loaded then return false end
+    
+    for _, validKey in ipairs(keySystem.keys) do
+        if inputKey:lower() == validKey:lower() then
+            return true
+        end
+    end
+    end
+    
+    return false
+end
+
 -- Visual Effects Module
 local VisualEffects = {};
 
@@ -1898,6 +1972,12 @@ do
                 Textbox:SetValue(Box.Text);
                 Library:AttemptSave();
             end);
+        end
+
+        -- Add manual trigger support for submit buttons
+        function Textbox:TriggerCallback()
+            Textbox:SetValue(Box.Text);
+            Library:AttemptSave();
         end
 
         -- https://devforum.roblox.com/t/how-to-make-textboxes-follow-current-cursor-position/1368429/6
