@@ -1,5 +1,5 @@
--- New example script written by wally
--- You can suggest changes with a pull request or something
+-- Enhanced example script showcasing modern Linoria Library features
+-- Demonstrates smooth animations, advanced themes, enhanced toggles, and premium notifications
 
 local repo = 'https://raw.githubusercontent.com/zulquix/custom-ui/main/'
 
@@ -7,29 +7,25 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
+-- Create window with enhanced features
 local Window = Library:CreateWindow({
-    -- Set Center to true if you want the menu to appear in the center
-    -- Set AutoShow to true if you want the menu to appear when it is created
-    -- Position and Size are also valid options here
-    -- but you do not need to define them unless you are changing them :)
-
-    Title = 'Example menu',
+    Title = '🎨 Modern Linoria Library Demo',
     Center = true,
     AutoShow = true,
     TabPadding = 8,
-    MenuFadeTime = 0.2
+    MenuFadeTime = 0.3 -- Slightly longer for smoother animations
 })
 
--- CALLBACK NOTE:
--- Passing in callback functions via the initial element parameters (i.e. Callback = function(Value)...) works
--- HOWEVER, using Toggles/Options.INDEX:OnChanged(function(Value) ... ) is the RECOMMENDED way to do this.
--- I strongly recommend decoupling UI code from logic code. i.e. Create your UI elements FIRST, and THEN setup :OnChanged functions later.
+-- Performance monitoring (new feature)
+Library:Notify('🚀 Modern Linoria Library Loaded!', 3, { Type = 'Success' })
+Library:Notify('✨ Try the new theme system and animations!', 4, { Type = 'Info' })
 
--- You do not have to set your tabs & groups up this way, just a prefrence.
+-- You do not have to set your tabs & groups up this way, just a preference.
 local Tabs = {
-    -- Creates a new tab titled Main
-    Main = Window:AddTab('Main'),
-    ['UI Settings'] = Window:AddTab('UI Settings'),
+    Main = Window:AddTab('🎮 Main'),
+    ['UI Settings'] = Window:AddTab('⚙️ UI Settings'),
+    Modern = Window:AddTab('✨ Modern Features'),
+    Performance = Window:AddTab('⚡ Performance')
 }
 
 -- Groupbox and Tabbox inherit the same functions
@@ -50,15 +46,56 @@ local Tab2 = TabBox:AddTab('Tab 2')
 -- You can now call AddToggle, etc on the tabs you added to the Tabbox
 ]]
 
--- Groupbox:AddToggle
--- Arguments: Index, Options
-LeftGroupBox:AddToggle('MyToggle', {
-    Text = 'This is a toggle',
-    Default = true, -- Default value (true / false)
-    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
-
+-- Enhanced Toggle with new features (debounce, cooldown, dependencies)
+LeftGroupBox:AddToggle('EnhancedToggle', {
+    Text = '🔥 Enhanced Toggle (New Features)',
+    Default = true,
+    Tooltip = 'This toggle showcases the new enhanced features: debounce, cooldown, and smooth animations',
+    
+    -- NEW: Anti-spam protection
+    AntiSpam = true,
+    Debounce = 0.2, -- 200ms debounce
+    
+    -- NEW: Cooldown support
+    Cooldown = 1, -- 1 second cooldown
+    
     Callback = function(Value)
-        print('[cb] MyToggle changed to:', Value)
+        print('[cb] Enhanced toggle changed to:', Value)
+        if Value then
+            Library:Notify('✅ Enhanced toggle activated!', 2, { Type = 'Success' })
+        else
+            Library:Notify('❌ Enhanced toggle deactivated!', 2, { Type = 'Warning' })
+        end
+    end
+})
+
+-- Toggle with dependencies (NEW FEATURE)
+LeftGroupBox:AddToggle('MasterToggle', {
+    Text = '👑 Master Control',
+    Default = false,
+    Tooltip = 'This toggle controls the visibility of dependent toggles below',
+    
+    Callback = function(Value)
+        print('[cb] Master toggle changed to:', Value)
+        Library:Notify(Value and '🔓 Features unlocked!' or '🔒 Features locked!', 2, 
+            { Type = Value and 'Success' or 'Warning' })
+    end
+})
+
+-- Dependent toggle (requires MasterToggle to be enabled)
+LeftGroupBox:AddToggle('DependentToggle', {
+    Text = '🔗 Dependent Toggle',
+    Default = false,
+    Tooltip = 'This toggle only works when Master Control is enabled',
+    
+    -- NEW: Dependency system
+    Dependencies = {{Toggles.MasterToggle, true}}, -- Requires MasterToggle = true
+    DependenciesMode = 'All', -- All dependencies must be met
+    
+    Callback = function(Value)
+        if Value then
+            Library:Notify('🎯 Dependent feature activated!', 2, { Type = 'Success' })
+        end
     end
 })
 
@@ -95,22 +132,51 @@ Toggles.MyToggle:SetValue(false)
     You can call :AddButton on a button to add a SubButton!
 ]]
 
+-- Enhanced button with smooth animations
 local MyButton = LeftGroupBox:AddButton({
-    Text = 'Button',
+    Text = '🎯 Test Notifications',
     Func = function()
-        print('You clicked a button!')
+        -- NEW: Enhanced notification system with different types
+        Library:NotifySuccess('✅ Success notification!', 3)
+        wait(0.5)
+        Library:NotifyWarning('⚠️ Warning notification!', 3)
+        wait(0.5)
+        Library:NotifyError('❌ Error notification!', 3)
+        wait(0.5)
+        Library:NotifyInfo('ℹ️ Info notification!', 3)
     end,
     DoubleClick = false,
-    Tooltip = 'This is the main button'
+    Tooltip = 'Click to test the new notification system with animations and stacking'
 })
 
-local MyButton2 = MyButton:AddButton({
-    Text = 'Sub button',
+local AnimationButton = MyButton:AddButton({
+    Text = '🎨 Test Animations',
     Func = function()
-        print('You clicked a sub button!')
+        -- NEW: Animation showcase
+        Library:Notify('🎬 Testing smooth animations...', 2, { Type = 'Info' })
+        
+        -- Test theme switching with animations
+        local themes = Library:GetAvailableThemes()
+        for i, theme in ipairs(themes) do
+            task.spawn(function()
+                wait(i * 0.5)
+                Library:SetTheme(theme)
+                Library:Notify('🎨 Theme: ' .. theme, 1.5, { Type = 'Info' })
+            end)
+        end
+        
+        -- Test RGB animation
+        task.spawn(function()
+            wait(#themes * 0.5 + 1)
+            Library:ToggleRGB(true, 3)
+            Library:Notify('🌈 RGB Animation Enabled!', 2, { Type = 'Success' })
+            wait(5)
+            Library:ToggleRGB(false)
+            Library:Notify('🌈 RGB Animation Disabled', 2, { Type = 'Info' })
+        end)
     end,
-    DoubleClick = true, -- You will have to click this button twice to trigger the callback
-    Tooltip = 'This is the sub button (double click me!)'
+    DoubleClick = true,
+    Tooltip = 'Double-click to test theme switching and RGB animations'
 })
 
 --[[
@@ -154,16 +220,24 @@ LeftGroupBox:AddDivider()
     HideMax will only display the value instead of the value & max value of the slider
     Compact will do the same thing
 ]]
-LeftGroupBox:AddSlider('MySlider', {
-    Text = 'This is my slider!',
-    Default = 0,
+-- Enhanced slider with smooth animations
+LeftGroupBox:AddSlider('EnhancedSlider', {
+    Text = '⚡ Enhanced Slider',
+    Default = 50,
     Min = 0,
-    Max = 5,
-    Rounding = 1,
+    Max = 100,
+    Rounding = 0,
     Compact = false,
+    Tooltip = 'Enhanced slider with smooth animations and visual feedback',
 
     Callback = function(Value)
-        print('[cb] MySlider was changed! New value:', Value)
+        print('[cb] Enhanced slider changed! New value:', Value)
+        -- NEW: Dynamic notifications based on value
+        if Value >= 80 then
+            Library:Notify('🔥 High power mode: ' .. Value .. '%', 1, { Type = 'Warning' })
+        elseif Value <= 20 then
+            Library:Notify('💤 Low power mode: ' .. Value .. '%', 1, { Type = 'Info' })
+        end
     end
 })
 
@@ -344,18 +418,166 @@ end)
 
 Options.KeyPicker:SetValue({ 'MB2', 'Toggle' }) -- Sets keybind to MB2, mode to Hold
 
--- Long text label to demonstrate UI scrolling behaviour.
-local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Groupbox #2');
-LeftGroupBox2:AddLabel('Oh no...\nThis label spans multiple lines!\n\nWe\'re gonna run out of UI space...\nJust kidding! Scroll down!\n\n\nHello from below!', true)
+-- NEW: Modern Features Tab
+local ModernGroup = Tabs.Modern:AddLeftGroupbox('🎨 Theme System')
 
-local TabBox = Tabs.Main:AddRightTabbox() -- Add Tabbox on right side
+-- Theme switching buttons
+ModernGroup:AddLabel('Built-in Themes:')
+ModernGroup:AddButton('🌙 Dark Theme', function()
+    Library:SetTheme('Dark')
+    Library:Notify('🌙 Dark theme applied!', 2, { Type = 'Success' })
+end):AddButton('🌊 Ocean Theme', function()
+    Library:SetTheme('Ocean')
+    Library:Notify('🌊 Ocean theme applied!', 2, { Type = 'Success' })
+end)
 
--- Anything we can do in a Groupbox, we can do in a Tabbox tab (AddToggle, AddSlider, AddLabel, etc etc...)
-local Tab1 = TabBox:AddTab('Tab 1')
-Tab1:AddToggle('Tab1Toggle', { Text = 'Tab1 Toggle' });
+ModernGroup:AddButton('🌅 Sunset Theme', function()
+    Library:SetTheme('Sunset')
+    Library:Notify('🌅 Sunset theme applied!', 2, { Type = 'Success' })
+end):AddButton('⚪ Default Theme', function()
+    Library:SetTheme('Default')
+    Library:Notify('⚪ Default theme applied!', 2, { Type = 'Success' })
+end)
 
-local Tab2 = TabBox:AddTab('Tab 2')
-Tab2:AddToggle('Tab2Toggle', { Text = 'Tab2 Toggle' });
+-- RGB Animation toggle
+ModernGroup:AddToggle('RGBAnimation', {
+    Text = '🌈 RGB Animation',
+    Default = false,
+    Tooltip = 'Enable smooth RGB color animations',
+    
+    Callback = function(Value)
+        Library:ToggleRGB(Value, 2)
+        Library:Notify(Value and '🌈 RGB animation enabled!' or '🌈 RGB animation disabled', 2, 
+            { Type = Value and 'Success' or 'Info' })
+    end
+})
+
+-- Custom theme registration (NEW FEATURE)
+ModernGroup:AddButton('🎨 Register Custom Theme', function()
+    -- Register a custom theme
+    local success = Library:RegisterCustomTheme('CustomPurple', {
+        FontColor = Color3.fromRGB(255, 230, 255),
+        MainColor = Color3.fromRGB(25, 15, 35),
+        BackgroundColor = Color3.fromRGB(15, 5, 25),
+        AccentColor = Color3.fromRGB(200, 100, 255),
+        OutlineColor = Color3.fromRGB(60, 30, 80),
+        RiskColor = Color3.fromRGB(255, 100, 200)
+    })
+    
+    if success then
+        Library:SetTheme('CustomPurple')
+        Library:Notify('🎨 Custom purple theme created and applied!', 3, { Type = 'Success' })
+    else
+        Library:Notify('❌ Failed to create custom theme', 2, { Type = 'Error' })
+    end
+end, { Tooltip = 'Register and apply a custom purple theme' })
+
+-- Notification showcase
+local NotificationGroup = Tabs.Modern:AddRightGroupbox('📢 Notification System')
+
+NotificationGroup:AddLabel('Enhanced Notifications:')
+NotificationGroup:AddButton('✅ Success', function()
+    Library:NotifySuccess('Operation completed successfully!', 3)
+end):AddButton('⚠️ Warning', function()
+    Library:NotifyWarning('Please be careful with this action!', 3)
+end)
+
+NotificationGroup:AddButton('❌ Error', function()
+    Library:NotifyError('An error occurred!', 3)
+end):AddButton('ℹ️ Info', function()
+    Library:NotifyInfo('Here is some useful information!', 3)
+end)
+
+NotificationGroup:AddButton('🧹 Clear All Notifications', function()
+    Library:ClearNotifications()
+    Library:Notify('🧹 All notifications cleared', 2, { Type = 'Info' })
+end, { Tooltip = 'Clear all active notifications with animation' })
+
+-- NEW: Performance Tab
+local PerformanceGroup = Tabs.Performance:AddLeftGroupbox('⚡ Performance Settings')
+
+-- Performance mode toggle
+PerformanceGroup:AddToggle('PerformanceMode', {
+    Text = '🚀 Performance Mode',
+    Default = false,
+    Tooltip = 'Disable animations for better performance on low-end devices',
+    
+    Callback = function(Value)
+        Library:SetPerformanceMode(Value)
+    end
+})
+
+-- Memory usage display
+PerformanceGroup:AddLabel('Memory Usage Monitor:')
+local MemoryLabel = PerformanceGroup:AddLabel('Loading...')
+
+-- Update memory usage every 2 seconds
+task.spawn(function()
+    while not Library.Unloaded do
+        local usage = Library:GetMemoryUsage()
+        MemoryLabel:SetText(([[
+Registry Entries: %d
+Active Animations: %d
+Notifications: %d
+Signals: %d
+Total Objects: %d
+
+%s Performance Mode]]):format(
+            usage.RegistryEntries,
+            usage.ActiveAnimations,
+            usage.Notifications,
+            usage.Signals,
+            usage.Total,
+            Library.PerformanceMode and '✅' or '❌'
+        ))
+        wait(2)
+    end
+end)
+
+-- Cleanup button
+PerformanceGroup:AddButton('🧹 Cleanup Memory', function()
+    Library:OptimizePerformance()
+    Library:Notify('🧹 Memory cleanup completed!', 2, { Type = 'Success' })
+end, { Tooltip = 'Clean up finished animations and destroyed objects' })
+
+-- Full cleanup button
+PerformanceGroup:AddButton('🔄 Full Cleanup', function()
+    Library:Cleanup()
+    Library:Notify('🔄 Full cleanup completed!', 2, { Type = 'Success' })
+end, { Tooltip = 'Perform complete cleanup of all resources' })
+
+-- Performance testing
+local TestGroup = Tabs.Performance:AddRightGroupbox('🧪 Performance Testing')
+
+TestGroup:AddLabel('Stress Testing:')
+TestGroup:AddButton('🎬 Animation Stress Test', function()
+    Library:Notify('🎬 Starting animation stress test...', 2, { Type = 'Info' })
+    
+    -- Create many animations to test performance
+    for i = 1, 50 do
+        task.spawn(function()
+            Library:Notify('🎬 Test notification ' .. i, 1, { Type = 'Info' })
+        end)
+    end
+    
+    Library:Notify('🎬 Stress test completed! Check memory usage.', 2, { Type = 'Success' })
+end, { Tooltip = 'Create many notifications to test animation performance' })
+
+TestGroup:AddButton('⚡ Theme Switch Test', function()
+    Library:Notify('⚡ Starting theme switch test...', 2, { Type = 'Info' })
+    
+    local themes = Library:GetAvailableThemes()
+    for i = 1, 10 do
+        task.spawn(function()
+            for j, theme in ipairs(themes) do
+                wait(0.1)
+                Library:SetTheme(theme)
+            end
+        end)
+    end
+    
+    Library:Notify('⚡ Theme switch test completed!', 2, { Type = 'Success' })
+end, { Tooltip = 'Rapidly switch themes to test performance' })
 
 -- Dependency boxes let us control the visibility of UI elements depending on another UI elements state.
 -- e.g. we have a 'Feature Enabled' toggle, and we only want to show that features sliders, dropdowns etc when it's enabled!
