@@ -2,7 +2,7 @@
 A Roblox UI library inspired by Splix, BBot and many others.
 
 ###### Example Script:
-* [Example](Example.lua)
+* [Example](https://github.com/zulquix/custom-ui/blob/main/Example.lua)
 
 ###### Interface Addons:
 * [Theme Manager](addons/ThemeManager.lua)&nbsp;&nbsp;|&nbsp;&nbsp;[Save Manager](addons/SaveManager.lua)
