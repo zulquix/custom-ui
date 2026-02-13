@@ -37,18 +37,13 @@ local ThemeManager = {} do
 
 	function ThemeManager:ThemeUpdate()
 		-- This allows us to force apply themes without loading the themes tab :)
-		local rgbEnabled = self.Library.IsRGBEnabled and self.Library:IsRGBEnabled() or false
-		local options = { "FontColor", "MainColor", "BackgroundColor", "OutlineColor" }
+		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
 			end
 		end
 
-		if not rgbEnabled and Options and Options.AccentColor then
-			self.Library.AccentColor = Options.AccentColor.Value
-		end
- 
 		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
 		self.Library:UpdateColorsUsingRegistry()
 	end
@@ -87,24 +82,6 @@ local ThemeManager = {} do
 		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
 		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
 
-		groupbox:AddDivider()
-		groupbox:AddLabel('RGB Accent')
-		groupbox:AddToggle('ThemeManager_RGBAccent', { Text = 'Enable RGB accent', Default = self.Library.IsRGBEnabled and self.Library:IsRGBEnabled() or false })
-		groupbox:AddSlider('ThemeManager_RGBSpeed', { Text = 'RGB speed', Default = 3, Min = 1, Max = 10, Rounding = 0 })
-
-		Options.ThemeManager_RGBAccent:OnChanged(function()
-			if self.Library.ToggleRGB then
-				self.Library:ToggleRGB(Options.ThemeManager_RGBAccent.Value, Options.ThemeManager_RGBSpeed.Value)
-			end
-			self:ThemeUpdate()
-		end)
-
-		Options.ThemeManager_RGBSpeed:OnChanged(function()
-			if self.Library.ToggleRGB then
-				self.Library:ToggleRGB(Options.ThemeManager_RGBAccent.Value, Options.ThemeManager_RGBSpeed.Value)
-			end
-		end)
- 
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
 			table.insert(ThemesArray, Name)
@@ -127,7 +104,6 @@ local ThemeManager = {} do
 		groupbox:AddDivider()
 		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
 		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
-		groupbox:AddInput('ThemeManager_CustomThemeJson', { Text = 'Custom theme JSON (optional)', Finished = true })
 		groupbox:AddDivider()
 		
 		groupbox:AddButton('Save theme', function() 
@@ -137,31 +113,6 @@ local ThemeManager = {} do
 			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end):AddButton('Load theme', function() 
 			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
-		end)
-
-		groupbox:AddButton('Register JSON theme', function()
-			if not self.Library or not self.Library.RegisterCustomTheme then
-				return
-			end
-
-			local name = Options.ThemeManager_CustomThemeName.Value
-			local raw = Options.ThemeManager_CustomThemeJson.Value
-			if type(raw) ~= 'string' or raw:gsub('%s+', '') == '' then
-				return self.Library:Notify('No JSON provided', 2)
-			end
-
-			local ok, decoded = pcall(httpService.JSONDecode, httpService, raw)
-			if not ok or type(decoded) ~= 'table' then
-				return self.Library:Notify('Invalid JSON', 2)
-			end
-
-			local success = self.Library:RegisterCustomTheme(name, decoded)
-			if success then
-				self.Library:Notify(string.format('Registered theme %q', name), 2)
-				self.Library:SetTheme(name)
-			else
-				self.Library:Notify('Failed to register theme', 2)
-			end
 		end)
 
 		groupbox:AddButton('Refresh list', function()

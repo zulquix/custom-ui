@@ -67,14 +67,6 @@ local SaveManager = {} do
 		},
 	}
 
-	function SaveManager:IgnoreDefaultThemeManagerExtras()
-		self:SetIgnoreIndexes({
-			"ThemeManager_RGBAccent",
-			"ThemeManager_RGBSpeed",
-			"ThemeManager_CustomThemeJson",
-		})
-	end
-
 	function SaveManager:SetIgnoreIndexes(list)
 		for _, key in next, list do
 			self.Ignore[key] = true
