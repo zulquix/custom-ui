@@ -1,24 +1,23 @@
--- Enhanced Services with caching
-local Services = setmetatable({}, {
-    __index = function(self, key)
-        local service = game:GetService(key)
-        rawset(self, key, service)
-        return service
-    end
-})
-
-local InputService = Services.UserInputService;
-local TextService = Services.TextService;
-local CoreGui = Services.CoreGui;
-local Teams = Services.Teams;
-local Players = Services.Players;
-local RunService = Services.RunService
-local TweenService = Services.TweenService;
-local HttpService = Services.HttpService;
+local InputService = game:GetService('UserInputService');
+local TextService = game:GetService('TextService');
+local CoreGui = game:GetService('CoreGui');
+local Teams = game:GetService('Teams');
+local Players = game:GetService('Players');
+local RunService = game:GetService('RunService')
+local TweenService = game:GetService('TweenService');
 local RenderStepped = RunService.RenderStepped;
-local Heartbeat = RunService.Heartbeat;
 local LocalPlayer = Players.LocalPlayer;
 local Mouse = LocalPlayer:GetMouse();
+
+local Services = {
+    UserInputService = InputService,
+    TextService = TextService,
+    CoreGui = CoreGui,
+    Teams = Teams,
+    Players = Players,
+    RunService = RunService,
+    TweenService = TweenService,
+}
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
@@ -34,330 +33,86 @@ local Options = {};
 getgenv().Toggles = Toggles;
 getgenv().Options = Options;
 
--- Enhanced Animation System
-local AnimationPresets = {
-    Fast = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Smooth = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Slow = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Bounce = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-    Elastic = TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
-};
-
--- Enhanced Theme System
-local ThemeManager = {
-    CurrentTheme = "Default",
-    RGBEnabled = false,
-    RGBSpeed = 2,
-    Themes = {
-        Default = {
-            FontColor = Color3.fromRGB(255, 255, 255),
-            MainColor = Color3.fromRGB(28, 28, 28),
-            BackgroundColor = Color3.fromRGB(20, 20, 20),
-            AccentColor = Color3.fromRGB(0, 85, 255),
-            OutlineColor = Color3.fromRGB(50, 50, 50),
-            RiskColor = Color3.fromRGB(255, 50, 50)
-        },
-        Dark = {
-            FontColor = Color3.fromRGB(240, 240, 240),
-            MainColor = Color3.fromRGB(15, 15, 15),
-            BackgroundColor = Color3.fromRGB(10, 10, 10),
-            AccentColor = Color3.fromRGB(100, 150, 255),
-            OutlineColor = Color3.fromRGB(40, 40, 40),
-            RiskColor = Color3.fromRGB(255, 100, 100)
-        },
-        Ocean = {
-            FontColor = Color3.fromRGB(220, 255, 255),
-            MainColor = Color3.fromRGB(10, 25, 35),
-            BackgroundColor = Color3.fromRGB(5, 15, 25),
-            AccentColor = Color3.fromRGB(0, 200, 255),
-            OutlineColor = Color3.fromRGB(30, 60, 80),
-            RiskColor = Color3.fromRGB(255, 100, 150)
-        },
-        Sunset = {
-            FontColor = Color3.fromRGB(255, 230, 200),
-            MainColor = Color3.fromRGB(35, 20, 15),
-            BackgroundColor = Color3.fromRGB(25, 10, 5),
-            AccentColor = Color3.fromRGB(255, 150, 50),
-            OutlineColor = Color3.fromRGB(60, 30, 20),
-            RiskColor = Color3.fromRGB(255, 50, 100)
-        }
-    },
-    CustomThemes = {}
-};
-
 local Library = {
     Registry = {};
     RegistryMap = {};
 
     HudRegistry = {};
 
-    -- Dynamic theme colors (will be updated based on current theme)
-    FontColor = ThemeManager.Themes.Default.FontColor,
-    MainColor = ThemeManager.Themes.Default.MainColor,
-    BackgroundColor = ThemeManager.Themes.Default.BackgroundColor,
-    AccentColor = ThemeManager.Themes.Default.AccentColor,
-    OutlineColor = ThemeManager.Themes.Default.OutlineColor,
-    RiskColor = ThemeManager.Themes.Default.RiskColor,
+    FontColor = Color3.fromRGB(255, 255, 255);
+    MainColor = Color3.fromRGB(28, 28, 28);
+    BackgroundColor = Color3.fromRGB(20, 20, 20);
+    AccentColor = Color3.fromRGB(0, 85, 255);
+    OutlineColor = Color3.fromRGB(50, 50, 50);
+    RiskColor = Color3.fromRGB(255, 50, 50),
 
     Black = Color3.new(0, 0, 0);
-    Font = Enum.Font.Code;
+    Font = Enum.Font.Code,
 
     OpenedFrames = {};
     DependencyBoxes = {};
 
     Signals = {};
     ScreenGui = ScreenGui;
-    
-    -- Animation system
-    Animations = {};
-    AnimationPresets = AnimationPresets;
-    
-    -- Enhanced features
-    ThemeManager = ThemeManager;
-    NotificationQueue = {};
-    KeybindConflicts = {};
-    PerformanceMode = false;
+
+    Animation = {
+        Enabled = true,
+        TweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        FastTweenInfo = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    },
+
+    Theme = {
+        CustomThemes = {},
+        UsingCustomTheme = false,
+        ActiveThemeName = 'Default',
+
+        RGB = {
+            Enabled = false,
+            Speed = 3,
+            Saturation = 0.8,
+            Value = 1,
+            UseAccentDark = true,
+        },
+
+        Gradients = {
+            Enabled = true,
+            Lighten = 0.12,
+            Darken = 0.18,
+        }
+    },
 };
 
--- Enhanced RGB Animation with performance optimization
 local RainbowStep = 0
 local Hue = 0
 
-local function UpdateRGBAnimation(Delta)
-    if ThemeManager.RGBEnabled then
-        RainbowStep = RainbowStep + Delta
-        
-        if RainbowStep >= (1 / 60) then
-            RainbowStep = 0
-            
-            Hue = (Hue + (ThemeManager.RGBSpeed / 400)) % 1
-            
-            Library.CurrentRainbowHue = Hue;
-            Library.CurrentRainbowColor = Color3.fromHSV(Hue, 0.8, 1);
-            
-            -- Update accent color with RGB
-            Library.AccentColor = Library.CurrentRainbowColor;
-            Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor);
-            
-            -- Update all registered accent color elements
-            Library:UpdateColorsUsingRegistry();
-        end
-    end
-end
+table.insert(Library.Signals, RenderStepped:Connect(function(Delta)
+    RainbowStep = RainbowStep + Delta
 
-table.insert(Library.Signals, RenderStepped:Connect(UpdateRGBAnimation))
+    if RainbowStep >= (1 / 60) then
+        RainbowStep = 0
 
--- Enhanced Animation Functions
-function Library:CreateTween(Instance, Info, Goals)
-    local Tween = TweenService:Create(Instance, Info, Goals)
-    table.insert(Library.Animations, Tween)
-    return Tween
-end
+        Hue = Hue + (1 / 400);
 
-function Library:SmoothProperty(Instance, Property, EndValue, Duration, EasingStyle, EasingDirection)
-    local Info = TweenInfo.new(
-        Duration or 0.25,
-        EasingStyle or Enum.EasingStyle.Quad,
-        EasingDirection or Enum.EasingDirection.Out
-    )
-    
-    local Tween = Library:CreateTween(Instance, Info, {[Property] = EndValue})
-    Tween:Play()
-    
-    return Tween
-end
+        if Hue > 1 then
+            Hue = 0;
+        end;
 
-function Library:FadeIn(Instance, Duration)
-    Duration = Duration or 0.25
-    
-    if Instance:IsA('ImageLabel') then
-        Library:SmoothProperty(Instance, 'ImageTransparency', 0, Duration)
-        Library:SmoothProperty(Instance, 'BackgroundTransparency', Instance.BackgroundTransparency, Duration)
-    elseif Instance:IsA('TextLabel') or Instance:IsA('TextBox') then
-        Library:SmoothProperty(Instance, 'TextTransparency', 0, Duration)
-    elseif Instance:IsA('Frame') or Instance:IsA('ScrollingFrame') then
-        Library:SmoothProperty(Instance, 'BackgroundTransparency', 0, Duration)
-    elseif Instance:IsA('UIStroke') then
-        Library:SmoothProperty(Instance, 'Transparency', 0, Duration)
-    end
-end
+        Library.CurrentRainbowHue = Hue;
+        Library.CurrentRainbowColor = Color3.fromHSV(Hue, 0.8, 1);
 
-function Library:FadeOut(Instance, Duration, Callback)
-    Duration = Duration or 0.25
-    
-    local Properties = {}
-    
-    if Instance:IsA('ImageLabel') then
-        Properties.ImageTransparency = 1
-        Properties.BackgroundTransparency = Instance.BackgroundTransparency == 0 and 1 or Instance.BackgroundTransparency
-    elseif Instance:IsA('TextLabel') or Instance:IsA('TextBox') then
-        Properties.TextTransparency = 1
-    elseif Instance:IsA('Frame') or Instance:IsA('ScrollingFrame') then
-        Properties.BackgroundTransparency = 1
-    elseif Instance:IsA('UIStroke') then
-        Properties.Transparency = 1
-    end
-    
-    local Info = TweenInfo.new(Duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local Tween = Library:CreateTween(Instance, Info, Properties)
-    
-    if Callback then
-        Tween.Completed:Connect(Callback)
-    end
-    
-    Tween:Play()
-    return Tween
-end
+        if Library.Theme and Library.Theme.RGB and Library.Theme.RGB.Enabled then
+            local rgb = Color3.fromHSV(
+                Hue,
+                Library.Theme.RGB.Saturation or 0.8,
+                Library.Theme.RGB.Value or 1
+            )
 
-function Library:SlideIn(Instance, Direction, Duration, Offset)
-    Duration = Duration or 0.3
-    Offset = Offset or 50
-    
-    local OriginalPosition = Instance.Position
-    local StartPosition
-    
-    if Direction == 'Left' then
-        StartPosition = OriginalPosition - UDim2.new(0, Offset, 0, 0)
-    elseif Direction == 'Right' then
-        StartPosition = OriginalPosition + UDim2.new(0, Offset, 0, 0)
-    elseif Direction == 'Top' then
-        StartPosition = OriginalPosition - UDim2.new(0, 0, 0, Offset)
-    elseif Direction == 'Bottom' then
-        StartPosition = OriginalPosition + UDim2.new(0, 0, 0, Offset)
-    else
-        StartPosition = OriginalPosition
-    end
-    
-    Instance.Position = StartPosition
-    Library:SmoothProperty(Instance, 'Position', OriginalPosition, Duration)
-end
-
-function Library:SlideOut(Instance, Direction, Duration, Offset, Callback)
-    Duration = Duration or 0.3
-    Offset = Offset or 50
-    
-    local EndPosition
-    
-    if Direction == 'Left' then
-        EndPosition = Instance.Position - UDim2.new(0, Offset, 0, 0)
-    elseif Direction == 'Right' then
-        EndPosition = Instance.Position + UDim2.new(0, Offset, 0, 0)
-    elseif Direction == 'Top' then
-        EndPosition = Instance.Position - UDim2.new(0, 0, 0, Offset)
-    elseif Direction == 'Bottom' then
-        EndPosition = Instance.Position + UDim2.new(0, 0, 0, Offset)
-    else
-        EndPosition = Instance.Position
-    end
-    
-    local Info = TweenInfo.new(Duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local Tween = Library:CreateTween(Instance, Info, {Position = EndPosition})
-    
-    if Callback then
-        Tween.Completed:Connect(Callback)
-    end
-    
-    Tween:Play()
-    return Tween
-end
-
-function Library:Pulse(Instance, Duration, Scale)
-    Duration = Duration or 0.5
-    Scale = Scale or 1.1
-    
-    local OriginalSize = Instance.Size
-    local PulseInfo = TweenInfo.new(Duration / 2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-    
-    local PulseOut = Library:CreateTween(Instance, PulseInfo, {Size = OriginalSize * Scale})
-    local PulseIn = Library:CreateTween(Instance, PulseInfo, {Size = OriginalSize})
-    
-    PulseOut.Completed:Connect(function()
-        PulseIn:Play()
-    end)
-    
-    PulseOut:Play()
-end
-
--- Enhanced Theme Management
-function Library:SetTheme(ThemeName)
-    local Theme = ThemeManager.Themes[ThemeName] or ThemeManager.CustomThemes[ThemeName]
-    
-    if not Theme then
-        warn('Theme "' .. ThemeName .. '" not found')
-        return false
-    end
-    
-    ThemeManager.CurrentTheme = ThemeName
-    
-    -- Update library colors
-    for ColorName, ColorValue in pairs(Theme) do
-        Library[ColorName] = ColorValue
-    end
-    
-    -- Update accent color dark
-    Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor)
-    
-    -- Update all registered elements
-    Library:UpdateColorsUsingRegistry()
-    
-    return true
-end
-
-function Library:RegisterCustomTheme(Name, Theme)
-    if type(Theme) ~= 'table' then
-        warn('Custom theme must be a table')
-        return false
-    end
-    
-    -- Validate theme structure
-    local RequiredColors = {'FontColor', 'MainColor', 'BackgroundColor', 'AccentColor', 'OutlineColor', 'RiskColor'}
-    for _, ColorName in ipairs(RequiredColors) do
-        if not Theme[ColorName] then
-            warn('Custom theme missing required color: ' .. ColorName)
-            return false
-        end
-    end
-    
-    ThemeManager.CustomThemes[Name] = Theme
-    return true
-end
-
-function Library:ToggleRGB(Enabled, Speed)
-    ThemeManager.RGBEnabled = Enabled or not ThemeManager.RGBEnabled
-    if Speed then
-        ThemeManager.RGBSpeed = Speed
-    end
-    
-    if not ThemeManager.RGBEnabled then
-        -- Restore original theme accent color
-        local CurrentTheme = ThemeManager.Themes[ThemeManager.CurrentTheme] or ThemeManager.CustomThemes[ThemeManager.CurrentTheme]
-        if CurrentTheme then
-            Library.AccentColor = CurrentTheme.AccentColor
-            Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor)
+            Library.AccentColor = rgb
+            Library.AccentColorDark = Library:GetDarkerColor(rgb)
             Library:UpdateColorsUsingRegistry()
         end
     end
-    
-    return ThemeManager.RGBEnabled
-end
-
-function Library:GetAvailableThemes()
-    local Themes = {}
-    
-    for Name, _ in pairs(ThemeManager.Themes) do
-        table.insert(Themes, Name)
-    end
-    
-    for Name, _ in pairs(ThemeManager.CustomThemes) do
-        table.insert(Themes, Name)
-    end
-    
-    return Themes
-end
-
-function Library:GetCurrentTheme()
-    return ThemeManager.CurrentTheme
-end
+end))
 
 local function GetPlayersString()
     local PlayerList = Players:GetPlayers();
@@ -389,8 +144,7 @@ function Library:SafeCallback(f, ...)
     end;
 
     if not Library.NotifyOnError then
-        local success, result = pcall(f, ...)
-        return success and result or nil
+        return f(...);
     end;
 
     local success, event = pcall(f, ...);
@@ -399,10 +153,10 @@ function Library:SafeCallback(f, ...)
         local _, i = event:find(":%d+: ");
 
         if not i then
-            return Library:Notify(event, 3, { Type = 'Error' });
+            return Library:Notify(event);
         end;
 
-        return Library:Notify(event:sub(i + 1), 3, { Type = 'Error' });
+        return Library:Notify(event:sub(i + 1), 3);
     end;
 end;
 
@@ -412,94 +166,151 @@ function Library:AttemptSave()
     end;
 end;
 
--- Performance Optimization Functions
-function Library:SetPerformanceMode(Enabled)
-    Library.PerformanceMode = Enabled
-    
-    if Enabled then
-        -- Disable expensive animations
-        for _, Tween in ipairs(Library.Animations) do
-            Tween:Cancel()
-        end
-        Library.Animations = {}
-        
-        Library:Notify("Performance mode enabled", 2, { Type = 'Info' })
-    else
-        Library:Notify("Performance mode disabled", 2, { Type = 'Info' })
+function Library:SetAnimationsEnabled(Bool)
+    if type(Bool) ~= 'boolean' then
+        Bool = not not Bool
     end
-    
-    return Enabled
+
+    Library.Animation.Enabled = Bool
 end
 
-function Library:OptimizePerformance()
-    -- Clean up finished tweens
-    for i = #Library.Animations, 1, -1 do
-        local Tween = Library.Animations[i]
-        if Tween.PlaybackState == Enum.PlaybackState.Completed or Tween.PlaybackState == Enum.PlaybackState.Cancelled then
-            table.remove(Library.Animations, i)
+function Library:Tween(Instance, TweenInfoObj, Properties)
+    if not Instance or type(Properties) ~= 'table' then
+        return nil
+    end
+
+    if not Library.Animation.Enabled then
+        for k, v in next, Properties do
+            Instance[k] = v
+        end
+        return nil
+    end
+
+    local ti = TweenInfoObj or Library.Animation.TweenInfo
+    local tween = TweenService:Create(Instance, ti, Properties)
+    tween:Play()
+    return tween
+end
+
+function Library:LerpColor(a, b, t)
+    return Color3.new(
+        a.R + (b.R - a.R) * t,
+        a.G + (b.G - a.G) * t,
+        a.B + (b.B - a.B) * t
+    )
+end
+
+function Library:GetGradientSequence(Base)
+    if not Library.Theme.Gradients.Enabled then
+        return ColorSequence.new(Base, Base)
+    end
+
+    local light = Library:LerpColor(Base, Color3.new(1, 1, 1), Library.Theme.Gradients.Lighten)
+    local dark = Library:LerpColor(Base, Color3.new(0, 0, 0), Library.Theme.Gradients.Darken)
+
+    return ColorSequence.new({
+        ColorSequenceKeypoint.new(0, dark),
+        ColorSequenceKeypoint.new(1, light),
+    })
+end
+
+function Library:AddGradientToRegistry(GradientInstance, ColorSource)
+    if not GradientInstance or not GradientInstance:IsA('UIGradient') then
+        return
+    end
+
+    local function getBaseColor()
+        if type(ColorSource) == 'string' then
+            return Library[ColorSource]
+        elseif type(ColorSource) == 'function' then
+            return ColorSource()
+        else
+            return ColorSource
         end
     end
-    
-    -- Clean up destroyed registry entries
-    for i = #Library.Registry, 1, -1 do
-        local Entry = Library.Registry[i]
-        if Entry.Instance and Entry.Instance.Parent == nil then
-            Library:RemoveFromRegistry(Entry.Instance)
+
+    Library:AddToRegistry(GradientInstance, {
+        Color = function()
+            return Library:GetGradientSequence(getBaseColor())
         end
+    })
+end
+
+function Library:RegisterCustomTheme(Name, Scheme)
+    if type(Name) ~= 'string' or Name:gsub('%s+', '') == '' then
+        return false
+    end
+    if type(Scheme) ~= 'table' then
+        return false
+    end
+
+    local out = {}
+    for k, v in next, Scheme do
+        if typeof(v) == 'Color3' then
+            out[k] = v
+        elseif type(v) == 'string' then
+            local ok, col = pcall(Color3.fromHex, v)
+            if ok and typeof(col) == 'Color3' then
+                out[k] = col
+            end
+        end
+    end
+
+    Library.Theme.CustomThemes[Name] = out
+    return true
+end
+
+function Library:ApplyCustomTheme(Name)
+    local Theme = Library.Theme.CustomThemes[Name]
+    if not Theme then
+        return false
+    end
+
+    Library.Theme.UsingCustomTheme = true
+    Library.Theme.ActiveThemeName = Name
+
+    for idx, col in next, Theme do
+        if typeof(col) == 'Color3' then
+            Library[idx] = col
+            if Options[idx] and Options[idx].Type == 'ColorPicker' then
+                Options[idx]:SetValueRGB(col)
+            end
+        end
+    end
+
+    Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor)
+    Library:UpdateColorsUsingRegistry()
+    return true
+end
+
+function Library:SetTheme(Name)
+    return Library:ApplyCustomTheme(Name)
+end
+
+function Library:ToggleRGB(Bool, Speed)
+    if type(Bool) ~= 'boolean' then
+        Bool = not not Bool
+    end
+
+    Library.Theme.RGB.Enabled = Bool
+    if type(Speed) == 'number' and Speed > 0 then
+        Library.Theme.RGB.Speed = Speed
     end
 end
 
--- Periodic cleanup
-Library:GiveSignal(Heartbeat:Connect(function()
-    if #Library.Animations > 100 then -- Too many animations
-        Library:OptimizePerformance()
-    end
-end))
+function Library:IsRGBEnabled()
+    return Library.Theme.RGB.Enabled
+end
 
--- Enhanced connection cleanup
 function Library:Cleanup()
-    -- Disconnect all signals
-    for _, Signal in ipairs(Library.Signals) do
-        if Signal.Disconnect then
-            Signal:Disconnect()
+    for i = #Library.Signals, 1, -1 do
+        local sig = Library.Signals[i]
+        if typeof(sig) == 'RBXScriptConnection' then
+            sig:Disconnect()
         end
+        table.remove(Library.Signals, i)
     end
-    
-    -- Cancel all animations
-    for _, Tween in ipairs(Library.Animations) do
-        Tween:Cancel()
-    end
-    
-    -- Clear notifications
-    Library:ClearNotifications()
-    
-    -- Unload
-    Library:Unload()
 end
-
--- Memory usage monitoring
-function Library:GetMemoryUsage()
-    local RegistryCount = #Library.Registry
-    local AnimationCount = #Library.Animations
-    local NotificationCount = #Library.NotificationQueue
-    local SignalCount = #Library.Signals
-    
-    return {
-        RegistryEntries = RegistryCount,
-        ActiveAnimations = AnimationCount,
-        Notifications = NotificationCount,
-        Signals = SignalCount,
-        Total = RegistryCount + AnimationCount + NotificationCount + SignalCount
-    }
-end
-
--- Auto-cleanup when memory usage is high
-Library:GiveSignal(Heartbeat:Connect(function()
-    local Usage = Library:GetMemoryUsage()
-    if Usage.Total > 500 then -- High memory usage
-        Library:OptimizePerformance()
-    end
-end))
 
 function Library:Create(Class, Properties)
     local _Instance = Class;
@@ -544,150 +355,33 @@ function Library:CreateLabel(Properties, IsHud)
     return Library:Create(_Instance, Properties);
 end;
 
--- Enhanced Window System with Smooth Dragging and Snap-to-Edge
 function Library:MakeDraggable(Instance, Cutoff)
-    Instance.Active = true
-    
-    local Dragging = false
-    local StartPosition = Vector2.new(0, 0)
-    local StartMousePos = Vector2.new(0, 0)
-    local SnapThreshold = 20
-    local EdgeMargin = 50
-    
+    Instance.Active = true;
+
     Instance.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local MousePos = Vector2.new(Mouse.X, Mouse.Y)
-            local InstancePos = Instance.AbsolutePosition
-            local InstanceSize = Instance.AbsoluteSize
-            
-            -- Check if click is within draggable area (top portion)
-            local RelativeY = MousePos.Y - InstancePos.Y
-            if RelativeY > (Cutoff or 40) then
-                return
-            end
-            
-            Dragging = true
-            StartPosition = InstancePos
-            StartMousePos = MousePos
-            
-            -- Bring to front
-            Instance.ZIndex = 1000
-        end
-    end)
-    
-    Instance.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            Dragging = false
-        end
-    end)
-    
-    -- Smooth dragging with snap-to-edge
-    Library:GiveSignal(RenderStepped:Connect(function()
-        if Dragging then
-            local CurrentMousePos = Vector2.new(Mouse.X, Mouse.Y)
-            local Delta = CurrentMousePos - StartMousePos
-            local TargetPos = StartPosition + Delta
-            
-            -- Get screen bounds
-            local ScreenSize = workspace.CurrentCamera.ViewportSize
-            local InstanceSize = Instance.AbsoluteSize
-            
-            -- Apply boundaries
-            TargetPos = Vector2.new(
-                math.max(0, math.min(ScreenSize.X - InstanceSize.X, TargetPos.X)),
-                math.max(0, math.min(ScreenSize.Y - InstanceSize.Y, TargetPos.Y))
-            )
-            
-            -- Snap-to-edge logic
-            local SnapX = TargetPos.X
-            local SnapY = TargetPos.Y
-            
-            -- Left edge snap
-            if TargetPos.X < EdgeMargin then
-                SnapX = 0
-            -- Right edge snap
-            elseif TargetPos.X > ScreenSize.X - InstanceSize.X - EdgeMargin then
-                SnapX = ScreenSize.X - InstanceSize.X
-            -- Center snap
-            elseif math.abs(TargetPos.X - (ScreenSize.X - InstanceSize.X) / 2) < SnapThreshold then
-                SnapX = (ScreenSize.X - InstanceSize.X) / 2
-            end
-            
-            -- Top edge snap
-            if TargetPos.Y < EdgeMargin then
-                SnapY = 0
-            -- Bottom edge snap
-            elseif TargetPos.Y > ScreenSize.Y - InstanceSize.Y - EdgeMargin then
-                SnapY = ScreenSize.Y - InstanceSize.Y
-            -- Center snap
-            elseif math.abs(TargetPos.Y - (ScreenSize.Y - InstanceSize.Y) / 2) < SnapThreshold then
-                SnapY = (ScreenSize.Y - InstanceSize.Y) / 2
-            end
-            
-            -- Smooth position update
-            if Library.PerformanceMode then
-                Instance.Position = UDim2.new(0, SnapX, 0, SnapY)
-            else
-                Library:SmoothProperty(Instance, 'Position', UDim2.new(0, SnapX, 0, SnapY), 0.1)
-            end
-        end
-    end))
-end
+            local ObjPos = Vector2.new(
+                Mouse.X - Instance.AbsolutePosition.X,
+                Mouse.Y - Instance.AbsolutePosition.Y
+            );
 
--- Enhanced tab switching with fade animations
-function Library:CreateTabFadeAnimation(TabFrame, Duration)
-    Duration = Duration or 0.3
-    
-    local function FadeIn()
-        TabFrame.Visible = true
-        TabFrame.BackgroundTransparency = 1
-        
-        -- Fade in all children
-        for _, Child in ipairs(TabFrame:GetChildren()) do
-            if Child:IsA('Frame') or Child:IsA('ScrollingFrame') then
-                Library:FadeIn(Child, Duration)
-            elseif Child:IsA('TextLabel') or Child:IsA('TextBox') then
-                Library:SmoothProperty(Child, 'TextTransparency', 0, Duration)
-            end
-        end
-        
-        Library:SmoothProperty(TabFrame, 'BackgroundTransparency', 0, Duration)
-    end
-    
-    local function FadeOut(Callback)
-        -- Fade out all children
-        local ChildrenToFade = {}
-        for _, Child in ipairs(TabFrame:GetChildren()) do
-            if Child:IsA('Frame') or Child:IsA('ScrollingFrame') or Child:IsA('TextLabel') or Child:IsA('TextBox') then
-                table.insert(ChildrenToFade, Child)
-            end
-        end
-        
-        local FadedCount = 0
-        local TotalCount = #ChildrenToFade
-        
-        for _, Child in ipairs(ChildrenToFade) do
-            if Child:IsA('Frame') or Child:IsA('ScrollingFrame') then
-                Library:FadeOut(Child, Duration, function()
-                    FadedCount = FadedCount + 1
-                    if FadedCount == TotalCount and Callback then
-                        Callback()
-                    end
-                end)
-            elseif Child:IsA('TextLabel') or Child:IsA('TextBox') then
-                Library:SmoothProperty(Child, 'TextTransparency', 1, Duration)
-                FadedCount = FadedCount + 1
-                if FadedCount == TotalCount and Callback then
-                    Callback()
-                end
-            end
-        end
-        
-        Library:SmoothProperty(TabFrame, 'BackgroundTransparency', 1, Duration)
-    end
-    
-    return { FadeIn = FadeIn, FadeOut = FadeOut }
-end
+            if ObjPos.Y > (Cutoff or 40) then
+                return;
+            end;
+
+            while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                Instance.Position = UDim2.new(
+                    0,
+                    Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
+                    0,
+                    Mouse.Y - ObjPos.Y + (Instance.Size.Y.Offset * Instance.AnchorPoint.Y)
+                );
+
+                RenderStepped:Wait();
+            end;
+        end;
+    end)
+end;
 
 function Library:AddToolTip(InfoStr, HoverInstance)
     local X, Y = Library:GetTextBounds(InfoStr, Library.Font, 14);
@@ -1509,6 +1203,7 @@ do
 
         local KeyPicker = {
             Value = Info.Default;
+            Combo = nil,
             Toggled = false;
             Mode = Info.Mode or 'Toggle'; -- Always, Toggle, Hold
             Type = 'KeyPicker';
@@ -1517,6 +1212,105 @@ do
 
             SyncToggleState = Info.SyncToggleState or false;
         };
+
+        local function normalizeKey(key)
+            if type(key) ~= 'string' then
+                return 'None'
+            end
+            return key
+        end
+
+        local function isModifier(key)
+            return key == 'LeftControl' or key == 'RightControl'
+                or key == 'LeftShift' or key == 'RightShift'
+                or key == 'LeftAlt' or key == 'RightAlt'
+        end
+
+        local function modifierNameFromKey(key)
+            if key == 'LeftControl' or key == 'RightControl' then return 'Ctrl' end
+            if key == 'LeftShift' or key == 'RightShift' then return 'Shift' end
+            if key == 'LeftAlt' or key == 'RightAlt' then return 'Alt' end
+            return nil
+        end
+
+        local function parseCombo(val)
+            if type(val) == 'table' then
+                return {
+                    Key = normalizeKey(val.Key or val[1]),
+                    Ctrl = not not (val.Ctrl),
+                    Shift = not not (val.Shift),
+                    Alt = not not (val.Alt),
+                }
+            end
+
+            if type(val) ~= 'string' then
+                return { Key = 'None', Ctrl = false, Shift = false, Alt = false }
+            end
+
+            local parts = {}
+            for part in val:gmatch('[^%+]+') do
+                parts[#parts + 1] = part
+            end
+
+            local combo = { Key = 'None', Ctrl = false, Shift = false, Alt = false }
+            for _, p in next, parts do
+                local s = p:gsub('^%s+', ''):gsub('%s+$', '')
+                local lower = s:lower()
+                if lower == 'ctrl' or lower == 'control' then
+                    combo.Ctrl = true
+                elseif lower == 'shift' then
+                    combo.Shift = true
+                elseif lower == 'alt' then
+                    combo.Alt = true
+                else
+                    combo.Key = s
+                end
+            end
+            return combo
+        end
+
+        local function formatCombo(combo)
+            if type(combo) ~= 'table' then
+                return normalizeKey(KeyPicker.Value)
+            end
+
+            local out = {}
+            if combo.Ctrl then out[#out + 1] = 'Ctrl' end
+            if combo.Shift then out[#out + 1] = 'Shift' end
+            if combo.Alt then out[#out + 1] = 'Alt' end
+            out[#out + 1] = normalizeKey(combo.Key)
+            return table.concat(out, '+')
+        end
+
+        KeyPicker.Combo = parseCombo(KeyPicker.Value)
+
+        local function comboPressed(combo)
+            if not combo or combo.Key == 'None' then
+                return false
+            end
+
+            local ctrlDown = InputService:IsKeyDown(Enum.KeyCode.LeftControl) or InputService:IsKeyDown(Enum.KeyCode.RightControl)
+            local shiftDown = InputService:IsKeyDown(Enum.KeyCode.LeftShift) or InputService:IsKeyDown(Enum.KeyCode.RightShift)
+            local altDown = InputService:IsKeyDown(Enum.KeyCode.LeftAlt) or InputService:IsKeyDown(Enum.KeyCode.RightAlt)
+
+            if combo.Ctrl and not ctrlDown then return false end
+            if combo.Shift and not shiftDown then return false end
+            if combo.Alt and not altDown then return false end
+
+            local Key = combo.Key
+            if Key == 'MB1' then
+                return InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+            elseif Key == 'MB2' then
+                return InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+            end
+
+            local kc = Enum.KeyCode[Key]
+            if kc then
+                return InputService:IsKeyDown(kc)
+            end
+
+            return false
+        end
 
         if KeyPicker.SyncToggleState then
             Info.Modes = { 'Toggle' }
@@ -1652,7 +1446,8 @@ do
 
             local State = KeyPicker:GetState();
 
-            ContainerLabel.Text = string.format('[%s] %s (%s)', KeyPicker.Value, Info.Text, KeyPicker.Mode);
+            local keyText = formatCombo(KeyPicker.Combo)
+            ContainerLabel.Text = string.format('[%s] %s (%s)', keyText, Info.Text, KeyPicker.Mode);
 
             ContainerLabel.Visible = true;
             ContainerLabel.TextColor3 = State and Library.AccentColor or Library.FontColor;
@@ -1678,18 +1473,7 @@ do
             if KeyPicker.Mode == 'Always' then
                 return true;
             elseif KeyPicker.Mode == 'Hold' then
-                if KeyPicker.Value == 'None' then
-                    return false;
-                end
-
-                local Key = KeyPicker.Value;
-
-                if Key == 'MB1' or Key == 'MB2' then
-                    return Key == 'MB1' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-                        or Key == 'MB2' and InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2);
-                else
-                    return InputService:IsKeyDown(Enum.KeyCode[KeyPicker.Value]);
-                end;
+                return comboPressed(KeyPicker.Combo)
             else
                 return KeyPicker.Toggled;
             end;
@@ -1697,8 +1481,9 @@ do
 
         function KeyPicker:SetValue(Data)
             local Key, Mode = Data[1], Data[2];
-            DisplayLabel.Text = Key;
             KeyPicker.Value = Key;
+            KeyPicker.Combo = parseCombo(Key)
+            DisplayLabel.Text = formatCombo(KeyPicker.Combo);
             ModeButtons[Mode]:Select();
             KeyPicker:Update();
         end;
@@ -1754,9 +1539,15 @@ do
                 local Event;
                 Event = InputService.InputBegan:Connect(function(Input)
                     local Key;
+                    local ctrlDown = InputService:IsKeyDown(Enum.KeyCode.LeftControl) or InputService:IsKeyDown(Enum.KeyCode.RightControl)
+                    local shiftDown = InputService:IsKeyDown(Enum.KeyCode.LeftShift) or InputService:IsKeyDown(Enum.KeyCode.RightShift)
+                    local altDown = InputService:IsKeyDown(Enum.KeyCode.LeftAlt) or InputService:IsKeyDown(Enum.KeyCode.RightAlt)
 
                     if Input.UserInputType == Enum.UserInputType.Keyboard then
                         Key = Input.KeyCode.Name;
+                        if isModifier(Key) then
+                            return
+                        end
                     elseif Input.UserInputType == Enum.UserInputType.MouseButton1 then
                         Key = 'MB1';
                     elseif Input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -1766,8 +1557,15 @@ do
                     Break = true;
                     Picking = false;
 
-                    DisplayLabel.Text = Key;
-                    KeyPicker.Value = Key;
+                    KeyPicker.Combo = {
+                        Key = Key,
+                        Ctrl = ctrlDown,
+                        Shift = shiftDown,
+                        Alt = altDown,
+                    }
+
+                    KeyPicker.Value = formatCombo(KeyPicker.Combo)
+                    DisplayLabel.Text = KeyPicker.Value;
 
                     Library:SafeCallback(KeyPicker.ChangedCallback, Input.KeyCode or Input.UserInputType)
                     Library:SafeCallback(KeyPicker.Changed, Input.KeyCode or Input.UserInputType)
@@ -1784,18 +1582,22 @@ do
         Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
             if (not Picking) then
                 if KeyPicker.Mode == 'Toggle' then
-                    local Key = KeyPicker.Value;
-
+                    local combo = KeyPicker.Combo
+                    local Key = combo and combo.Key or KeyPicker.Value
                     if Key == 'MB1' or Key == 'MB2' then
                         if Key == 'MB1' and Input.UserInputType == Enum.UserInputType.MouseButton1
                         or Key == 'MB2' and Input.UserInputType == Enum.UserInputType.MouseButton2 then
-                            KeyPicker.Toggled = not KeyPicker.Toggled
-                            KeyPicker:DoClick()
+                            if comboPressed(combo) then
+                                KeyPicker.Toggled = not KeyPicker.Toggled
+                                KeyPicker:DoClick()
+                            end
                         end;
                     elseif Input.UserInputType == Enum.UserInputType.Keyboard then
                         if Input.KeyCode.Name == Key then
-                            KeyPicker.Toggled = not KeyPicker.Toggled;
-                            KeyPicker:DoClick()
+                            if comboPressed(combo) then
+                                KeyPicker.Toggled = not KeyPicker.Toggled;
+                                KeyPicker:DoClick()
+                            end
                         end;
                     end;
                 end;
@@ -2314,247 +2116,232 @@ do
         return Textbox;
     end;
 
--- Enhanced Toggle System with Debounce and Dependencies
-function Funcs:AddToggle(Idx, Info)
-    assert(Info.Text, 'AddToggle: Missing `Text` string.')
+    function Funcs:AddToggle(Idx, Info)
+        assert(Info.Text, 'AddInput: Missing `Text` string.')
 
-    local Toggle = {
-        Value = Info.Default or false;
-        Type = 'Toggle';
+        local Toggle = {
+            Value = Info.Default or false;
+            Type = 'Toggle';
 
-        Callback = Info.Callback or function(Value) end;
-        Addons = {};
-        Risky = Info.Risky;
-        
-        -- Enhanced features
-        Cooldown = Info.Cooldown or 0;
-        LastToggle = 0;
-        Dependencies = Info.Dependencies or {};
-        DependenciesMode = Info.DependenciesMode or 'All'; -- 'All' or 'Any'
-        AntiSpamEnabled = Info.AntiSpam ~= false;
-        DebounceTime = Info.Debounce or 0.1;
-        LastCallback = 0;
-    };
+            Callback = Info.Callback or function(Value) end;
+            Addons = {},
+            Risky = Info.Risky,
 
-    local Groupbox = self;
-    local Container = Groupbox.Container;
+            Debounce = Info.Debounce ~= false,
+            Cooldown = type(Info.Cooldown) == 'number' and Info.Cooldown or 0,
+            LastToggle = 0,
 
-    local ToggleOuter = Library:Create('Frame', {
-        BackgroundColor3 = Color3.new(0, 0, 0);
-        BorderColor3 = Color3.new(0, 0, 0);
-        Size = UDim2.new(0, 13, 0, 13);
-        ZIndex = 5;
-        Parent = Container;
-    });
+            Dependencies = nil,
+            DependencyMode = 'All',
+        };
 
-    Library:AddToRegistry(ToggleOuter, {
-        BorderColor3 = 'Black';
-    });
+        local Groupbox = self;
+        local Container = Groupbox.Container;
 
-    local ToggleInner = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.OutlineColor;
-        BorderMode = Enum.BorderMode.Inset;
-        Size = UDim2.new(1, 0, 1, 0);
-        ZIndex = 6;
-        Parent = ToggleOuter;
-    });
+        local ToggleOuter = Library:Create('Frame', {
+            BackgroundColor3 = Color3.new(0, 0, 0);
+            BorderColor3 = Color3.new(0, 0, 0);
+            Size = UDim2.new(0, 13, 0, 13);
+            ZIndex = 5;
+            Parent = Container;
+        });
 
-    Library:AddToRegistry(ToggleInner, {
-        BackgroundColor3 = 'MainColor';
-        BorderColor3 = 'OutlineColor';
-    });
+        Library:AddToRegistry(ToggleOuter, {
+            BorderColor3 = 'Black';
+        });
 
-    local ToggleLabel = Library:CreateLabel({
-        Size = UDim2.new(0, 216, 1, 0);
-        Position = UDim2.new(1, 6, 0, 0);
-        TextSize = 14;
-        Text = Info.Text;
-        TextXAlignment = Enum.TextXAlignment.Left;
-        ZIndex = 6;
-        Parent = ToggleInner;
-    });
+        local ToggleInner = Library:Create('Frame', {
+            BackgroundColor3 = Library.MainColor;
+            BorderColor3 = Library.OutlineColor;
+            BorderMode = Enum.BorderMode.Inset;
+            Size = UDim2.new(1, 0, 1, 0);
+            ZIndex = 6;
+            Parent = ToggleOuter;
+        });
 
-    Library:Create('UIListLayout', {
-        Padding = UDim.new(0, 4);
-        FillDirection = Enum.FillDirection.Horizontal;
-        HorizontalAlignment = Enum.HorizontalAlignment.Right;
-        SortOrder = Enum.SortOrder.LayoutOrder;
-        Parent = ToggleLabel;
-    });
+        Library:AddToRegistry(ToggleInner, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        });
 
-    local ToggleRegion = Library:Create('Frame', {
-        BackgroundTransparency = 1;
-        Size = UDim2.new(0, 170, 1, 0);
-        ZIndex = 8;
-        Parent = ToggleOuter;
-    });
+        local ToggleLabel = Library:CreateLabel({
+            Size = UDim2.new(0, 216, 1, 0);
+            Position = UDim2.new(1, 6, 0, 0);
+            TextSize = 14;
+            Text = Info.Text;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            ZIndex = 6;
+            Parent = ToggleInner;
+        });
 
-    Library:OnHighlight(ToggleRegion, ToggleOuter,
-        { BorderColor3 = 'AccentColor' },
-        { BorderColor3 = 'Black' }
-    );
+        Library:Create('UIListLayout', {
+            Padding = UDim.new(0, 4);
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Parent = ToggleLabel;
+        });
 
-    -- Enhanced dependency checking
-    function Toggle:CheckDependencies()
-        if #Toggle.Dependencies == 0 then
-            return true
-        end
-        
-        local MetRequirements = 0
-        
-        for _, Dependency in ipairs(Toggle.Dependencies) do
-            local Element = Dependency[1]
-            local RequiredValue = Dependency[2]
-            
-            if Element and Element.Value == RequiredValue then
-                MetRequirements = MetRequirements + 1
-            end
-        end
-        
-        if Toggle.DependenciesMode == 'All' then
-            return MetRequirements == #Toggle.Dependencies
-        else -- 'Any'
-            return MetRequirements > 0
-        end
-    end
-    
-    function Toggle:CanToggle()
-        local CurrentTime = tick()
-        
-        -- Check cooldown
-        if Toggle.Cooldown > 0 and (CurrentTime - Toggle.LastToggle) < Toggle.Cooldown then
-            return false, "Cooldown"
-        end
-        
-        -- Check debounce
-        if Toggle.AntiSpamEnabled and (CurrentTime - Toggle.LastCallback) < Toggle.DebounceTime then
-            return false, "Debounce"
-        end
-        
-        -- Check dependencies
-        if not Toggle:CheckDependencies() then
-            return false, "Dependencies"
-        end
-        
-        return true, "Success"
-    end
+        local ToggleRegion = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Size = UDim2.new(0, 170, 1, 0);
+            ZIndex = 8;
+            Parent = ToggleOuter;
+        });
 
-    function Toggle:UpdateColors()
-        Toggle:Display();
-    end;
+        Library:OnHighlight(ToggleRegion, ToggleOuter,
+            { BorderColor3 = 'AccentColor' },
+            { BorderColor3 = 'Black' }
+        );
 
-    if type(Info.Tooltip) == 'string' then
-        Library:AddToolTip(Info.Tooltip, ToggleRegion)
-    end
-
-    function Toggle:Display()
-        local CanUse = Toggle:CheckDependencies()
-        local TargetColor = Toggle.Value and Library.AccentColor or Library.MainColor
-        local TargetBorderColor = Toggle.Value and Library.AccentColorDark or Library.OutlineColor
-        
-        -- Apply dependency-based visual feedback
-        if not CanUse then
-            TargetColor = Library:GetDarkerColor(Library.MainColor)
-            TargetBorderColor = Library:GetDarkerColor(Library.OutlineColor)
-        end
-        
-        -- Smooth color transition
-        if Library.PerformanceMode then
-            ToggleInner.BackgroundColor3 = TargetColor
-            ToggleInner.BorderColor3 = TargetBorderColor
-        else
-            Library:SmoothProperty(ToggleInner, 'BackgroundColor3', TargetColor, 0.2)
-            Library:SmoothProperty(ToggleInner, 'BorderColor3', TargetBorderColor, 0.2)
-        end
-        
-        Library.RegistryMap[ToggleInner].Properties.BackgroundColor3 = Toggle.Value and 'AccentColor' or 'MainColor';
-        Library.RegistryMap[ToggleInner].Properties.BorderColor3 = Toggle.Value and 'AccentColorDark' or 'OutlineColor';
-        
-        -- Update label transparency based on dependencies
-        if not CanUse then
-            ToggleLabel.TextTransparency = 0.5
-        else
-            ToggleLabel.TextTransparency = 0
-        end
-    end;
-
-    function Toggle:OnChanged(Func)
-        Toggle.Changed = Func;
-        Func(Toggle.Value);
-    end;
-
-    function Toggle:SetValue(Bool)
-        Bool = (not not Bool);
-        
-        -- Check if toggle is allowed
-        local CanToggle, Reason = Toggle:CanToggle()
-        if Bool ~= Toggle.Value and not CanToggle then
-            if Reason == "Cooldown" then
-                Library:Notify("Toggle on cooldown: " .. math.ceil(Toggle.Cooldown - (tick() - Toggle.LastToggle)) .. "s", 2)
-            elseif Reason == "Dependencies" then
-                Library:Notify("Toggle dependencies not met", 2)
-            end
-            return false
-        end
-        
-        Toggle.Value = Bool;
-        Toggle.LastToggle = tick()
-        Toggle:Display();
-
-        for _, Addon in next, Toggle.Addons do
-            if Addon.Type == 'KeyPicker' and Addon.SyncToggleState then
-                Addon.Toggled = Bool
-                Addon:Update()
-            end
-        end
-
-        -- Safe callback execution with debounce
-        task.spawn(function()
-            if Toggle.AntiSpamEnabled then
-                local CurrentTime = tick()
-                if (CurrentTime - Toggle.LastCallback) >= Toggle.DebounceTime then
-                    Toggle.LastCallback = CurrentTime
-                    Library:SafeCallback(Toggle.Callback, Toggle.Value);
-                    Library:SafeCallback(Toggle.Changed, Toggle.Value);
-                end
-            else
-                Library:SafeCallback(Toggle.Callback, Toggle.Value);
-                Library:SafeCallback(Toggle.Changed, Toggle.Value);
-            end
-        end)
-        
-        Library:UpdateDependencyBoxes();
-        return true
-    end;
-
-    ToggleRegion.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
-            Toggle:SetValue(not Toggle.Value)
-            Library:AttemptSave();
+        function Toggle:UpdateColors()
+            Toggle:Display();
         end;
-    end);
 
-    if Toggle.Risky then
-        Library:RemoveFromRegistry(ToggleLabel)
-        ToggleLabel.TextColor3 = Library.RiskColor
-        Library:AddToRegistry(ToggleLabel, { TextColor3 = 'RiskColor' })
-    end
+        if type(Info.Tooltip) == 'string' then
+            Library:AddToolTip(Info.Tooltip, ToggleRegion)
+        end
 
-    Toggle:Display();
-    Groupbox:AddBlank(Info.BlankSize or 5 + 2);
-    Groupbox:Resize();
+        function Toggle:Display()
+            local bg = Toggle.Value and Library.AccentColor or Library.MainColor
+            local border = Toggle.Value and Library.AccentColorDark or Library.OutlineColor
 
-    Toggle.TextLabel = ToggleLabel;
-    Toggle.Container = Container;
-    setmetatable(Toggle, BaseAddons);
+            if Library.Animation.Enabled then
+                Library:Tween(ToggleInner, Library.Animation.FastTweenInfo, {
+                    BackgroundColor3 = bg,
+                    BorderColor3 = border,
+                })
+            else
+                ToggleInner.BackgroundColor3 = bg
+                ToggleInner.BorderColor3 = border
+            end
 
-    Toggles[Idx] = Toggle;
+            Library.RegistryMap[ToggleInner].Properties.BackgroundColor3 = Toggle.Value and 'AccentColor' or 'MainColor';
+            Library.RegistryMap[ToggleInner].Properties.BorderColor3 = Toggle.Value and 'AccentColorDark' or 'OutlineColor';
+        end;
 
-    Library:UpdateDependencyBoxes();
+        function Toggle:SetDependencies(Deps, Mode)
+            if type(Deps) ~= 'table' then
+                Toggle.Dependencies = nil
+                return
+            end
 
-    return Toggle;
-end;
+            Toggle.Dependencies = Deps
+            if Mode == 'Any' or Mode == 'All' then
+                Toggle.DependencyMode = Mode
+            end
+
+            Toggle:SetValue(Toggle.Value)
+        end
+
+        function Toggle:DependenciesMet()
+            if type(Toggle.Dependencies) ~= 'table' then
+                return true
+            end
+
+            local modeAny = Toggle.DependencyMode == 'Any'
+            local anyMet = false
+
+            for _, dep in next, Toggle.Dependencies do
+                local elem = dep[1]
+                local expected = dep[2]
+                local ok = true
+
+                if elem and elem.Type == 'Toggle' then
+                    ok = (elem.Value == expected)
+                elseif elem and elem.Type then
+                    ok = true
+                end
+
+                if modeAny then
+                    if ok then
+                        anyMet = true
+                        break
+                    end
+                else
+                    if not ok then
+                        return false
+                    end
+                end
+            end
+
+            return modeAny and anyMet or true
+        end
+
+        function Toggle:OnChanged(Func)
+            Toggle.Changed = Func;
+            Func(Toggle.Value);
+        end;
+
+        function Toggle:SetValue(Bool)
+            Bool = (not not Bool);
+
+            if not Toggle:DependenciesMet() then
+                return
+            end
+
+            local now = tick()
+            if Toggle.Cooldown > 0 and (now - Toggle.LastToggle) < Toggle.Cooldown then
+                return
+            end
+
+            Toggle.LastToggle = now
+
+            Toggle.Value = Bool;
+            Toggle:Display();
+
+            for _, Addon in next, Toggle.Addons do
+                if Addon.Type == 'KeyPicker' and Addon.SyncToggleState then
+                    Addon.Toggled = Bool
+                    Addon:Update()
+                end
+            end
+
+            Library:SafeCallback(Toggle.Callback, Toggle.Value);
+            Library:SafeCallback(Toggle.Changed, Toggle.Value);
+            Library:UpdateDependencyBoxes();
+        end;
+
+        ToggleRegion.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
+                if Toggle.Debounce and Toggle._Busy then
+                    return
+                end
+
+                Toggle._Busy = true
+                Toggle:SetValue(not Toggle.Value) -- Why was it not like this from the start?
+                Library:AttemptSave();
+
+                if Toggle.Debounce then
+                    task.delay(0.08, function()
+                        Toggle._Busy = false
+                    end)
+                else
+                    Toggle._Busy = false
+                end
+            end;
+        end);
+
+        if Toggle.Risky then
+            Library:RemoveFromRegistry(ToggleLabel)
+            ToggleLabel.TextColor3 = Library.RiskColor
+            Library:AddToRegistry(ToggleLabel, { TextColor3 = 'RiskColor' })
+        end
+
+        Toggle:Display();
+        Groupbox:AddBlank(Info.BlankSize or 5 + 2);
+        Groupbox:Resize();
+
+        Toggle.TextLabel = ToggleLabel;
+        Toggle.Container = Container;
+        setmetatable(Toggle, BaseAddons);
+
+        Toggles[Idx] = Toggle;
+
+        Library:UpdateDependencyBoxes();
+
+        return Toggle;
+    end;
 
     function Funcs:AddSlider(Idx, Info)
         assert(Info.Default, 'AddSlider: Missing default value.');
@@ -3444,208 +3231,169 @@ function Library:SetWatermark(Text)
 
     Library.WatermarkText.Text = Text;
 end;
+@@
+function Library:Notify(Text, Time)
+    return Library:NotifyEx({
+        Text = Text,
+        Duration = Time,
+        Type = 'Info',
+    })
+end;
 
--- Enhanced Notification System with Animations and Stacking
-function Library:Notify(Text, Time, Options)
-    Options = Options or {}
-    local Type = Options.Type or 'Info'
-    local Icon = Options.Icon
-    local Duration = Time or Options.Duration or 5
-    
-    -- Notification types with default colors and icons
-    local NotificationTypes = {
-        Info = { Color = Library.AccentColor, Icon = 'ℹ️' },
-        Success = { Color = Color3.fromRGB(50, 255, 50), Icon = '✓' },
-        Warning = { Color = Color3.fromRGB(255, 200, 50), Icon = '⚠️' },
-        Error = { Color = Library.RiskColor, Icon = '✗' },
-        Default = { Color = Library.AccentColor, Icon = 'ℹ️' }
-    }
-    
-    local NotifType = NotificationTypes[Type] or NotificationTypes.Default
-    local NotifColor = Options.Color or NotifType.Color
-    local NotifIcon = Icon or NotifType.Icon
-    
-    local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14)
+function Library:ClearNotifications()
+    if not Library.NotificationArea then
+        return
+    end
+
+    for _, child in next, Library.NotificationArea:GetChildren() do
+        if child:IsA('Frame') and child.Name == 'Notification' then
+            child:Destroy()
+        end
+    end
+end
+
+function Library:GetNotificationStyle(NotifyType)
+    if NotifyType == 'Success' then
+        return { Icon = '✓', Color = Color3.fromRGB(60, 200, 120) }
+    elseif NotifyType == 'Warning' then
+        return { Icon = '!', Color = Color3.fromRGB(255, 190, 60) }
+    elseif NotifyType == 'Error' then
+        return { Icon = '×', Color = Color3.fromRGB(255, 80, 80) }
+    end
+
+    return { Icon = 'i', Color = Library.AccentColor }
+end
+
+function Library:NotifyEx(Info)
+    if type(Info) ~= 'table' then
+        return
+    end
+
+    local Text = tostring(Info.Text or '')
+    local Duration = type(Info.Duration) == 'number' and Info.Duration or 5
+    local NotifyType = Info.Type or 'Info'
+
+    local style = Library:GetNotificationStyle(NotifyType)
+
+    local displayText = Text
+    if Info.Icon ~= false then
+        local iconText = type(Info.Icon) == 'string' and Info.Icon or style.Icon
+        displayText = string.format('[%s] %s', iconText, Text)
+    end
+
+    local XSize, YSize = Library:GetTextBounds(displayText, Library.Font, 14)
     YSize = YSize + 7
-    
-    -- Create notification container with enhanced visuals
+
     local NotifyOuter = Library:Create('Frame', {
-        BorderColor3 = Color3.new(0, 0, 0),
-        Position = UDim2.new(0, 100, 0, 10),
-        Size = UDim2.new(0, 0, 0, YSize),
-        ClipsDescendants = true,
-        ZIndex = 100,
-        Parent = Library.NotificationArea,
-    })
-    
+        Name = 'Notification',
+        BorderColor3 = Color3.new(0, 0, 0);
+        Size = UDim2.new(0, 0, 0, YSize);
+        ClipsDescendants = true;
+        BackgroundTransparency = 1;
+        ZIndex = 100;
+        Parent = Library.NotificationArea;
+    });
+
     local NotifyInner = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor,
-        BorderColor3 = NotifColor,
-        BorderMode = Enum.BorderMode.Inset,
-        Size = UDim2.new(1, 0, 1, 0),
-        ZIndex = 101,
-        Parent = NotifyOuter,
-    })
-    
+        BackgroundColor3 = Library.MainColor;
+        BorderColor3 = Library.OutlineColor;
+        BorderMode = Enum.BorderMode.Inset;
+        Size = UDim2.new(1, 0, 1, 0);
+        ZIndex = 101;
+        Parent = NotifyOuter;
+    });
+
     Library:AddToRegistry(NotifyInner, {
         BackgroundColor3 = 'MainColor';
         BorderColor3 = 'OutlineColor';
-    }, true)
-    
+    }, true);
+
     local InnerFrame = Library:Create('Frame', {
-        BackgroundColor3 = Color3.new(1, 1, 1),
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 1, 0, 1),
-        Size = UDim2.new(1, -2, 1, -2),
-        ZIndex = 102,
-        Parent = NotifyInner,
-    })
-    
+        BackgroundColor3 = Color3.new(1, 1, 1);
+        BorderSizePixel = 0;
+        Position = UDim2.new(0, 1, 0, 1);
+        Size = UDim2.new(1, -2, 1, -2);
+        ZIndex = 102;
+        Parent = NotifyInner;
+    });
+
     local Gradient = Library:Create('UIGradient', {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-            ColorSequenceKeypoint.new(1, Library.MainColor),
-        });
         Rotation = -90;
         Parent = InnerFrame;
-    })
-    
-    Library:AddToRegistry(Gradient, {
-        Color = function()
-            return ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-                ColorSequenceKeypoint.new(1, Library.MainColor),
-            });
-        end
-    })
-    
-    -- Icon label
-    local IconLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 8, 0, 0),
-        Size = UDim2.new(0, 20, 1, 0),
-        Text = NotifIcon,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextColor3 = NotifColor,
-        ZIndex = 103,
-        Parent = InnerFrame,
-    })
-    
-    -- Main text label
-    local NotifyLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 32, 0, 0),
-        Size = UDim2.new(1, -36, 1, 0),
-        Text = Text,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextSize = 14,
-        ZIndex = 103,
-        Parent = InnerFrame,
-    })
-    
-    -- Left color indicator with enhanced visuals
-    local LeftColor = Library:Create('Frame', {
-        BackgroundColor3 = NotifColor,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, -1, 0, -1),
-        Size = UDim2.new(0, 4, 1, 2),
-        ZIndex = 104,
-        Parent = NotifyOuter,
-    })
-    
-    Library:AddToRegistry(LeftColor, {
-        BackgroundColor3 = 'AccentColor';
-    }, true)
-    
-    -- Add to notification queue for stacking
-    table.insert(Library.NotificationQueue, NotifyOuter)
-    
-    -- Reposition other notifications
-    local function UpdateNotificationPositions()
-        local Offset = 0
-        for i, Notification in ipairs(Library.NotificationQueue) do
-            if Notification == NotifyOuter then
-                break
-            end
-            if Notification and Notification.Parent then
-                Offset = Offset + Notification.AbsoluteSize.Y + 4
-            end
-        end
-        
-        -- Animate to new position
-        Library:SmoothProperty(NotifyOuter, 'Position', UDim2.new(0, 100, 0, 10 + Offset), 0.3)
-    end
-    
-    -- Enhanced slide-in animation
-    NotifyOuter.Size = UDim2.new(0, 0, 0, YSize)
-    NotifyOuter.Position = UDim2.new(0, -XSize - 8 - 4, 0, 10)
-    
-    -- Slide in from left
-    task.spawn(function()
-        Library:SmoothProperty(NotifyOuter, 'Position', UDim2.new(0, 100, 0, 10), 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        Library:SmoothProperty(NotifyOuter, 'Size', UDim2.new(0, XSize + 8 + 4, 0, YSize), 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        UpdateNotificationPositions()
+    });
+
+    Library:AddGradientToRegistry(Gradient, function()
+        return Library.MainColor
     end)
-    
-    -- Auto-remove with enhanced animation
+
+    local NotifyLabel = Library:CreateLabel({
+        Position = UDim2.new(0, 4, 0, 0);
+        Size = UDim2.new(1, -4, 1, 0);
+        Text = displayText;
+        TextXAlignment = Enum.TextXAlignment.Left;
+        TextSize = 14;
+        ZIndex = 103;
+        Parent = InnerFrame;
+    });
+
+    local LeftColor = Library:Create('Frame', {
+        BackgroundColor3 = style.Color;
+        BorderSizePixel = 0;
+        Position = UDim2.new(0, -1, 0, -1);
+        Size = UDim2.new(0, 3, 1, 2);
+        ZIndex = 104;
+        Parent = NotifyOuter;
+    });
+
+    Library:AddToRegistry(LeftColor, {
+        BackgroundColor3 = function()
+            if NotifyType == 'Info' then
+                return Library.AccentColor
+            end
+            return style.Color
+        end
+    }, true);
+
+    local targetWidth = XSize + 8 + 4
+
+    NotifyOuter.Size = UDim2.new(0, 0, 0, YSize)
+    NotifyOuter.Position = UDim2.new(0, -10, 0, 0)
+    NotifyOuter.BackgroundTransparency = 1
+
+    Library:Tween(NotifyOuter, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, targetWidth, 0, YSize),
+    })
+
     task.spawn(function()
         wait(Duration)
-        
-        -- Slide out animation
-        Library:SmoothProperty(NotifyOuter, 'Position', UDim2.new(0, -XSize - 8 - 4, 0, NotifyOuter.Position.Y.Offset), 0.3)
-        Library:SmoothProperty(NotifyOuter, 'Size', UDim2.new(0, 0, 0, YSize), 0.3)
-        
-        wait(0.3)
-        
-        -- Remove from queue and clean up
-        for i, Notification in ipairs(Library.NotificationQueue) do
-            if Notification == NotifyOuter then
-                table.remove(Library.NotificationQueue, i)
-                break
-            end
+
+        Library:Tween(NotifyOuter, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, YSize),
+        })
+
+        task.wait(0.3)
+        if NotifyOuter then
+            NotifyOuter:Destroy()
         end
-        
-        NotifyOuter:Destroy()
-        
-        -- Update positions of remaining notifications
-        task.spawn(UpdateNotificationPositions)
     end)
-    
+
     return NotifyOuter
 end
 
--- Enhanced notification helper functions
-function Library:NotifySuccess(Text, Duration)
-    return Library:Notify(Text, Duration, { Type = 'Success' })
+function Library:NotifySuccess(Text, Time)
+    return Library:NotifyEx({ Text = Text, Duration = Time, Type = 'Success' })
 end
 
-function Library:NotifyWarning(Text, Duration)
-    return Library:Notify(Text, Duration, { Type = 'Warning' })
+function Library:NotifyWarning(Text, Time)
+    return Library:NotifyEx({ Text = Text, Duration = Time, Type = 'Warning' })
 end
 
-function Library:NotifyError(Text, Duration)
-    return Library:Notify(Text, Duration, { Type = 'Error' })
+function Library:NotifyError(Text, Time)
+    return Library:NotifyEx({ Text = Text, Duration = Time, Type = 'Error' })
 end
 
-function Library:NotifyInfo(Text, Duration)
-    return Library:Notify(Text, Duration, { Type = 'Info' })
-end
-
-function Library:ClearNotifications()
-    for i = #Library.NotificationQueue, 1, -1 do
-        local Notification = Library.NotificationQueue[i]
-        if Notification and Notification.Parent then
-            Library:SmoothProperty(Notification, 'Position', UDim2.new(0, -Notification.AbsoluteSize.X - 4, 0, Notification.Position.Y.Offset), 0.2)
-            Library:SmoothProperty(Notification, 'Size', UDim2.new(0, 0, 0, Notification.AbsoluteSize.Y), 0.2)
-            
-            task.spawn(function()
-                wait(0.2)
-                if Notification.Parent then
-                    Notification:Destroy()
-                end
-            end)
-        end
-        table.remove(Library.NotificationQueue, i)
-    end
+function Library:NotifyInfo(Text, Time)
+    return Library:NotifyEx({ Text = Text, Duration = Time, Type = 'Info' })
 end
 
 function Library:CreateWindow(...)
@@ -3877,45 +3625,20 @@ function Library:CreateWindow(...)
 
         function Tab:ShowTab()
             for _, Tab in next, Window.Tabs do
-                if Tab ~= self then
-                    Tab:HideTab();
-                end
+                Tab:HideTab();
             end;
 
-            -- Enhanced tab switching with animations
-            if not Library.PerformanceMode then
-                local FadeAnimation = Library:CreateTabFadeAnimation(TabFrame, 0.25)
-                FadeAnimation.FadeIn()
-            else
-                TabFrame.Visible = true;
-            end
-            
             Blocker.BackgroundTransparency = 0;
             TabButton.BackgroundColor3 = Library.MainColor;
             Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'MainColor';
-            
-            -- Smooth color transition for tab button
-            Library:SmoothProperty(TabButton, 'BackgroundColor3', Library.MainColor, 0.2)
-            Library:SmoothProperty(Blocker, 'BackgroundTransparency', 0, 0.2)
+            TabFrame.Visible = true;
         end;
 
         function Tab:HideTab()
-            if not Library.PerformanceMode then
-                local FadeAnimation = Library:CreateTabFadeAnimation(TabFrame, 0.2)
-                FadeAnimation.FadeOut(function()
-                    TabFrame.Visible = false;
-                end)
-            else
-                TabFrame.Visible = false;
-            end
-            
             Blocker.BackgroundTransparency = 1;
             TabButton.BackgroundColor3 = Library.BackgroundColor;
             Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'BackgroundColor';
-            
-            -- Smooth color transition for tab button
-            Library:SmoothProperty(TabButton, 'BackgroundColor3', Library.BackgroundColor, 0.2)
-            Library:SmoothProperty(Blocker, 'BackgroundTransparency', 1, 0.2)
+            TabFrame.Visible = false;
         end;
 
         function Tab:SetLayoutOrder(Position)
