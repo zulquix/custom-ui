@@ -1,11 +1,65 @@
 -- New example script written by wally
 -- You can suggest changes with a pull request or something
 
-local repo = 'https://github.com/zulquix/custom-ui'
+local repo = 'https://github.com/zulquix/custom-ui/tree/main'
 
-local Library = loadstring(game:HttpGet(repo .. '/Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. '/addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. '/addons/SaveManager.lua'))()
+local function normalizeRepo(url)
+    if type(url) ~= 'string' then
+        return 'https://raw.githubusercontent.com/zulquix/custom-ui/main/'
+    end
+
+    url = url:gsub('%s+$', '')
+
+    if url:find('raw%.githubusercontent%.com', 1, false) then
+        return url:sub(-1) == '/' and url or (url .. '/')
+    end
+
+    local user, repoName, branch = url:match('github%.com/([^/]+)/([^/]+)/tree/([^/%?]+)')
+    if user and repoName and branch then
+        return ('https://raw.githubusercontent.com/%s/%s/%s/'):format(user, repoName, branch)
+    end
+
+    return url:sub(-1) == '/' and url or (url .. '/')
+end
+
+repo = normalizeRepo(repo)
+
+local function httpGet(url)
+    if game and game.HttpGet then
+        local ok, body = pcall(function()
+            return game:HttpGet(url)
+        end)
+        if ok and type(body) == 'string' then
+            return body
+        end
+    end
+
+    local req = (syn and syn.request) or http_request or request
+    if req then
+        local res = req({ Url = url, Method = 'GET' })
+        local body = res and (res.Body or res.body)
+        if type(body) == 'string' then
+            return body
+        end
+    end
+
+    return nil
+end
+
+local function loadRemote(url)
+    local src = httpGet(url)
+    assert(type(src) == 'string', 'Failed to fetch: ' .. url)
+
+    assert(type(loadstring) == 'function', 'loadstring is not available in this executor')
+
+    local fn, err = loadstring(src)
+    assert(type(fn) == 'function', ('loadstring failed for %s: %s'):format(url, tostring(err)))
+    return fn()
+end
+
+local Library = loadRemote(repo .. '/Library.lua')
+local ThemeManager = loadRemote(repo .. '/addons/ThemeManager.lua')
+local SaveManager = loadRemote(repo .. '/addons/SaveManager.lua')
 
 local Window = Library:CreateWindow({
     -- Set Center to true if you want the menu to appear in the center
@@ -455,4 +509,3 @@ ThemeManager:ApplyToTab(Tabs['UI Settings'])
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
 print("NEW VERSION LOADED")
-
