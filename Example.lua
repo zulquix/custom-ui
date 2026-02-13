@@ -3,9 +3,42 @@
 
 local repo = 'https://raw.githubusercontent.com/zulquix/custom-ui/main/'
 
-local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
-local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
-local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+local function httpGet(url)
+    if game and game.HttpGet then
+        local ok, body = pcall(function()
+            return game:HttpGet(url)
+        end)
+        if ok and type(body) == 'string' then
+            return body
+        end
+    end
+
+    local request = (syn and syn.request) or http_request or request
+    if request then
+        local res = request({ Url = url, Method = 'GET' })
+        local body = res and (res.Body or res.body)
+        if type(body) == 'string' then
+            return body
+        end
+    end
+
+    return nil
+end
+
+local function loadRemote(url)
+    local src = httpGet(url)
+    assert(type(src) == 'string', 'Failed to fetch: ' .. url)
+
+    assert(type(loadstring) == 'function', 'loadstring is not available in this executor')
+
+    local fn, err = loadstring(src)
+    assert(type(fn) == 'function', ('loadstring failed for %s: %s'):format(url, tostring(err)))
+    return fn()
+end
+
+local Library = loadRemote(repo .. 'Library.lua')
+local ThemeManager = loadRemote(repo .. 'addons/ThemeManager.lua')
+local SaveManager = loadRemote(repo .. 'addons/SaveManager.lua')
 
 local Window = Library:CreateWindow({
     -- Set Center to true if you want the menu to appear in the center
